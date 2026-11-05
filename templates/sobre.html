@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container" style="max-width: 860px;">
+
+  <h1 class="h3">Sobre o CineRepertório</h1>
+
+  <section class="painel">
+    <h2 class="h5 brilho">O projeto</h2>
+    <p>
+      O CineRepertório reúne filmes que funcionam como repertório sociocultural legitimado na
+      redação do ENEM. Cada título traz sinopse, temas, nota do IMDb, indicação do parágrafo em que
+      rende melhor, uma citação pronta em linguagem formal e links para assistir legalmente.
+    </p>
+    <p class="mb-0">
+      Hoje o catálogo tem <strong>{{ total }}</strong> filmes e <strong>{{ total_anotacoes }}</strong>
+      anotação(ões) pessoal(is) salva(s).
+    </p>
+  </section>
+
+  <section class="painel">
+    <h2 class="h5 brilho">Tecnologias</h2>
+    <ul class="mb-0">
+      <li><strong>Python + Flask</strong> — rotas, formulários e regras da aplicação.</li>
+      <li><strong>Jinja2</strong> — herança de templates a partir de <code>base.html</code>.</li>
+      <li><strong>Bootstrap 5</strong> + CSS próprio — layout responsivo e tema escuro com dourado.</li>
+      <li><strong>JavaScript</strong> — esteiras de cartazes e botão de copiar citação.</li>
+      <li><strong>SQLite</strong> — banco relacional (<code>banco.db</code>) com chaves estrangeiras, CRUD e consultas com JOIN.</li>
+    </ul>
+  </section>
+
+  <section class="painel">
+    <h2 class="h5 brilho">Rotas da aplicação</h2>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle mb-0">
+        <caption class="visually-hidden">Lista de rotas, métodos HTTP e funções</caption>
+        <thead>
+          <tr><th scope="col">Rota</th><th scope="col">Método</th><th scope="col">Função</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/</td><td>GET</td><td>Página inicial com esteiras de cartazes</td></tr>
+          <tr><td>/filmes</td><td>GET</td><td>Catálogo com busca, filtros e ordenação (READ)</td></tr>
+          <tr><td>/filmes/&lt;id&gt;</td><td>GET</td><td>Detalhe do filme, citação e lojas</td></tr>
+          <tr><td>/filmes/novo</td><td>GET, POST</td><td>Cadastro de filme (CREATE)</td></tr>
+          <tr><td>/filmes/&lt;id&gt;/editar</td><td>GET, POST</td><td>Edição de filme (UPDATE)</td></tr>
+          <tr><td>/filmes/&lt;id&gt;/excluir</td><td>POST</td><td>Exclusão de filme (DELETE)</td></tr>
+          <tr><td>/anotacoes</td><td>GET, POST</td><td>Anotações de repertório (READ e CREATE)</td></tr>
+          <tr><td>/anotacoes/&lt;id&gt;/excluir</td><td>POST</td><td>Exclusão de anotação (DELETE)</td></tr>
+          <tr><td>/estrutura</td><td>GET</td><td>Guia da estrutura da redação</td></tr>
+          <tr><td>/sobre</td><td>GET</td><td>Documentação do projeto</td></tr>
+          <tr><td>/api/filmes</td><td>GET</td><td>API JSON: lista de filmes (aceita busca, tema, parte e ordem)</td></tr>
+          <tr><td>/api/filmes/&lt;id&gt;</td><td>GET</td><td>API JSON: um filme com temas e anotações</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="painel">
+    <h2 class="h5 brilho">Acessibilidade</h2>
+    <ul class="mb-0">
+      <li>Link “pular para o conteúdo” e navegação completa por teclado com foco visível.</li>
+      <li>HTML semântico: <code>header</code>, <code>nav</code>, <code>main</code>, <code>section</code>, <code>article</code>, <code>footer</code>.</li>
+      <li>Textos alternativos em todos os cartazes e rótulos associados a cada campo de formulário.</li>
+      <li>Avisos do sistema anunciados por leitores de tela (<code>aria-live</code>).</li>
+      <li>Contraste alto entre texto e fundo; animações param no hover e no foco.</li>
+    </ul>
+  </section>
+
+</div>
+{% endblock %}

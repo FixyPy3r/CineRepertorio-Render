@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container" style="max-width: 900px;">
+
+  <h1 class="h3">{{ 'Cadastrar novo filme' if modo == 'novo' else 'Editar filme' }}</h1>
+  <p class="texto-suave">
+    Os dados são gravados no banco de dados SQLite (tabelas <code>filmes</code> e <code>temas</code>). Campos com * são obrigatórios.
+  </p>
+
+  <form class="painel" method="post" novalidate
+        action="{{ url_for('filme_novo') if modo == 'novo' else url_for('filme_editar', filme_id=filme_id) }}">
+    <div class="row g-3">
+      <div class="col-12 col-md-8">
+        <label class="form-label" for="titulo">Título *</label>
+        <input class="form-control" id="titulo" name="titulo" required
+               value="{{ filme.titulo or '' }}">
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label" for="ano">Ano de lançamento *</label>
+        <input class="form-control" id="ano" name="ano" type="number" min="1895" max="2100" required
+               value="{{ filme.ano or '' }}">
+      </div>
+      <div class="col-12 col-md-8">
+        <label class="form-label" for="diretor">Direção *</label>
+        <input class="form-control" id="diretor" name="diretor" required
+               value="{{ filme.diretor or '' }}">
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label" for="imdb">Nota IMDb (0 a 10) *</label>
+        <input class="form-control" id="imdb" name="imdb" type="number" step="0.1" min="0" max="10" required
+               value="{{ filme.imdb or '' }}">
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="temas">Temas *</label>
+        <input class="form-control" id="temas" name="temas" required
+               aria-describedby="ajuda-temas"
+               value="{{ filme.temas_texto or filme.temas or '' }}">
+        <div class="form-text" id="ajuda-temas">Separe por vírgula. Ex.: Desigualdade social, Trabalho, Educação.</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="sinopse">Sinopse *</label>
+        <textarea class="form-control" id="sinopse" name="sinopse" rows="3" required>{{ filme.sinopse or '' }}</textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="comoUsar">Como usar na redação</label>
+        <textarea class="form-control" id="comoUsar" name="comoUsar" rows="2">{{ filme.comoUsar or '' }}</textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="citacao">Citação pronta *</label>
+        <textarea class="form-control" id="citacao" name="citacao" rows="3" required
+                  aria-describedby="ajuda-citacao">{{ filme.citacao or '' }}</textarea>
+        <div class="form-text" id="ajuda-citacao">Escreva já no formato de uso: “Como retrata Título (Ano), ...”.</div>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="parte">Parágrafo ideal *</label>
+        <select class="form-select" id="parte" name="parte" required>
+          {% for p in partes %}
+            <option value="{{ p }}" {% if filme.parte == p %}selected{% endif %}>{{ rotulo_parte[p] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="cartaz">URL do cartaz</label>
+        <input class="form-control" id="cartaz" name="cartaz" type="url"
+               aria-describedby="ajuda-cartaz" value="{{ filme.cartaz or '' }}">
+        <div class="form-text" id="ajuda-cartaz">Opcional. Endereço de uma imagem do cartaz.</div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <button class="btn btn-dourado" type="submit">
+        {{ 'Cadastrar filme' if modo == 'novo' else 'Salvar alterações' }}
+      </button>
+      <a class="btn btn-contorno" href="{{ url_for('filmes_lista') }}">Cancelar</a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

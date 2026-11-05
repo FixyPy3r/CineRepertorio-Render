@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container">
+
+  <nav aria-label="Você está aqui" class="small mb-3">
+    <a href="{{ url_for('filmes_lista') }}" class="link-dourado">&larr; Voltar ao catálogo</a>
+  </nav>
+
+  <article class="row g-4">
+    <div class="col-12 col-md-4">
+      <img class="cartaz-detalhe" src="{{ filme.cartaz|cartaz }}"
+           alt="Cartaz do filme {{ filme.titulo }}" width="400" height="600">
+    </div>
+
+    <div class="col-12 col-md-8">
+      <h1 class="h2">{{ filme.titulo }}</h1>
+      <p class="texto-suave">
+        {{ filme.ano }} · Direção de {{ filme.diretor }} ·
+        <span class="nota-inline">&#9733; {{ '%.1f'|format(filme.imdb) }} no IMDb</span>
+      </p>
+
+      <ul class="lista-temas" aria-label="Temas do filme">
+        {% for t in filme.temas %}<li>{{ t }}</li>{% endfor %}
+        <li class="tag-parte">{{ rotulo_parte[filme.parte] }}</li>
+      </ul>
+
+      <h2 class="h6 brilho mt-4">Sinopse</h2>
+      <p>{{ filme.sinopse }}</p>
+
+      {% if filme.comoUsar %}
+        <h2 class="h6 brilho">Como usar na redação</h2>
+        <p>{{ filme.comoUsar }}</p>
+      {% endif %}
+
+      <h2 class="h6 brilho">Citação pronta</h2>
+      <blockquote class="citacao">
+        <p class="mb-2" id="texto-citacao">{{ filme.citacao }}</p>
+        <button class="btn btn-contorno btn-sm" type="button"
+                data-copiar="#texto-citacao">Copiar citação</button>
+      </blockquote>
+
+      <h2 class="h6 brilho mt-4">Onde assistir, alugar ou comprar</h2>
+      <div class="d-flex flex-wrap gap-2">
+        {% for loja in lojas(filme.titulo) %}
+          <a class="btn btn-dourado btn-sm" href="{{ loja.url }}" target="_blank" rel="noopener"
+             aria-label="Procurar {{ filme.titulo }} na {{ loja.nome }} (abre em nova aba)">{{ loja.nome }}</a>
+        {% endfor %}
+        <a class="btn btn-contorno btn-sm" href="{{ imdb_url(filme.titulo, filme.ano) }}"
+           target="_blank" rel="noopener"
+           aria-label="Ver {{ filme.titulo }} no IMDb (abre em nova aba)">Ver no IMDb</a>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <a class="btn btn-contorno btn-sm" href="{{ url_for('filme_editar', filme_id=filme.id) }}">Editar filme</a>
+        <form method="post" action="{{ url_for('filme_excluir', filme_id=filme.id) }}"
+              onsubmit="return confirm('Excluir {{ filme.titulo }} do catálogo?');">
+          <button class="btn btn-perigo btn-sm" type="submit">Excluir filme</button>
+        </form>
+      </div>
+    </div>
+  </article>
+
+  {% if anotacoes %}
+    <section class="mt-5" aria-labelledby="titulo-anotacoes">
+      <h2 id="titulo-anotacoes" class="h5">Minhas anotações sobre este filme</h2>
+      <ul class="list-unstyled">
+        {% for a in anotacoes %}
+          <li class="painel mb-2">
+            <p class="mb-1 small texto-suave">{{ rotulo_parte[a.parte] }} · {{ a.criado_em }}</p>
+            <p class="mb-0">{{ a.texto }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if relacionados %}
+    <section class="mt-5" aria-labelledby="titulo-relacionados">
+      <h2 id="titulo-relacionados" class="h5">Filmes com temas parecidos</h2>
+      <div class="row row-cols-2 row-cols-lg-6 g-3">
+        {% for filme in relacionados %}
+          <div class="col">{% include "_cartaz.html" %}</div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+</div>
+{% endblock %}

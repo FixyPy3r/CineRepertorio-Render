@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ titulo_pagina }}{% endblock %} · CineRepertório</title>
+  <meta name="description" content="CineRepertório: catálogo de filmes para usar como repertório sociocultural na redação do ENEM, com nota do IMDb, citação pronta e guia de estrutura.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+  <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo principal</a>
+
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark barra-topo" aria-label="Navegação principal">
+      <div class="container">
+        <a class="navbar-brand marca" href="{{ url_for('index') }}">
+          <span aria-hidden="true">&#127916;</span> Cine<span class="brilho">Repertório</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+                aria-controls="menu" aria-expanded="false" aria-label="Abrir menu de navegação">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+          <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+            {% set rotas = [('index','Início'), ('filmes_lista','Filmes'), ('estrutura','Estrutura'),
+                            ('anotacoes','Anotações'), ('sobre','Sobre')] %}
+            {% for rota, rotulo in rotas %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == rota %}ativo{% endif %}"
+                   href="{{ url_for(rota) }}"
+                   {% if request.endpoint == rota %}aria-current="page"{% endif %}>{{ rotulo }}</a>
+              </li>
+            {% endfor %}
+            <li class="nav-item">
+              <a class="btn btn-dourado btn-sm ms-lg-2" href="{{ url_for('filme_novo') }}">+ Novo filme</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="conteudo">
+    <div class="container py-4">
+      {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% if mensagens %}
+          <div role="status" aria-live="polite">
+            {% for categoria, mensagem in mensagens %}
+              <div class="alert alert-{{ categoria }} alert-dismissible fade show" role="alert">
+                {{ mensagem }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Fechar aviso"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape mt-5">
+    <div class="container py-4 d-flex flex-wrap justify-content-between gap-3">
+      <p class="mb-0 small">CineRepertório · repertório sociocultural para a redação do ENEM</p>
+      <p class="mb-0 small text-secundario">Projeto acadêmico UC35 — Projeto Integrador Back-end · {{ ano_atual }}</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,292 @@
+/* ==========================================================================
+   CineRepertório — tema escuro cinematográfico com destaque dourado
+   ========================================================================== */
+
+:root {
+  --fundo: #0c0b12;
+  --fundo-2: #14121d;
+  --superficie: #191627;
+  --borda: #2b2740;
+  --texto: #f2eefb;
+  --texto-suave: #b3aacb;
+  --dourado: #f5c45e;
+  --dourado-forte: #ffd782;
+  --perigo: #e2607a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background:
+    radial-gradient(1100px 520px at 15% -10%, rgba(245, 196, 94, 0.12), transparent 60%),
+    radial-gradient(900px 480px at 90% 0%, rgba(120, 90, 220, 0.14), transparent 60%),
+    var(--fundo);
+  color: var(--texto);
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 { letter-spacing: -0.01em; }
+.texto-suave { color: var(--texto-suave); }
+.text-secundario { color: #8d85a6; }
+
+.brilho {
+  color: var(--dourado);
+  text-shadow: 0 0 18px rgba(245, 196, 94, 0.45);
+}
+
+/* Acessibilidade ---------------------------------------------------------- */
+.pular-conteudo {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 1080;
+  background: var(--dourado);
+  color: #17130a;
+  padding: 0.6rem 1rem;
+  font-weight: 700;
+  border-radius: 0 0 0.5rem 0;
+}
+.pular-conteudo:focus { left: 0; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--dourado);
+  outline-offset: 2px;
+}
+
+/* Navegação --------------------------------------------------------------- */
+.barra-topo {
+  background: rgba(12, 11, 18, 0.92);
+  border-bottom: 1px solid var(--borda);
+  backdrop-filter: blur(8px);
+}
+.marca { font-weight: 800; letter-spacing: -0.02em; }
+.navbar-dark .navbar-nav .nav-link { color: var(--texto-suave); }
+.navbar-dark .navbar-nav .nav-link:hover { color: var(--texto); }
+.navbar-dark .navbar-nav .nav-link.ativo {
+  color: var(--dourado);
+  border-bottom: 2px solid var(--dourado);
+}
+
+/* Botões ------------------------------------------------------------------ */
+.btn-dourado {
+  background: linear-gradient(180deg, var(--dourado-forte), var(--dourado));
+  border: none;
+  color: #1a1408;
+  font-weight: 700;
+  box-shadow: 0 0 22px rgba(245, 196, 94, 0.28);
+}
+.btn-dourado:hover { color: #1a1408; filter: brightness(1.07); }
+
+.btn-contorno {
+  border: 1px solid var(--borda);
+  color: var(--texto);
+  background: transparent;
+}
+.btn-contorno:hover { border-color: var(--dourado); color: var(--dourado); }
+
+.btn-perigo { background: transparent; border: 1px solid var(--perigo); color: var(--perigo); }
+.btn-perigo:hover { background: var(--perigo); color: #15070b; }
+
+.link-dourado { color: var(--dourado); text-decoration: none; }
+.link-dourado:hover { text-decoration: underline; }
+
+/* Superfícies ------------------------------------------------------------- */
+.painel {
+  background: linear-gradient(180deg, var(--superficie), var(--fundo-2));
+  border: 1px solid var(--borda);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.hero { padding: 3rem 0 1rem; }
+.selo {
+  display: inline-block;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  padding: 0.25rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--dourado);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Cartazes ---------------------------------------------------------------- */
+.cartaz {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  border: 1px solid var(--borda);
+  background: var(--fundo-2);
+  aspect-ratio: 2 / 3;
+  text-decoration: none;
+  color: var(--texto);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cartaz:hover,
+.cartaz:focus-visible {
+  transform: scale(1.03);
+  border-color: var(--dourado);
+  box-shadow: 0 0 26px rgba(245, 196, 94, 0.25);
+}
+.cartaz img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cartaz .nota {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(12, 11, 18, 0.85);
+  color: var(--dourado);
+  border: 1px solid rgba(245, 196, 94, 0.5);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.cartaz-info {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2.2rem 0.7rem 0.7rem;
+  background: linear-gradient(to top, rgba(12, 11, 18, 0.96), transparent);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.cartaz-info strong { font-size: 0.85rem; }
+.cartaz-info small { color: var(--texto-suave); font-size: 0.72rem; }
+
+.cartaz-detalhe {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--borda);
+  box-shadow: 0 0 40px rgba(245, 196, 94, 0.16);
+  object-fit: cover;
+  height: auto;
+}
+
+/* Esteiras automáticas ---------------------------------------------------- */
+.esteira {
+  overflow: hidden;
+  padding: 0.75rem 0;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+.esteira-trilha {
+  display: flex;
+  gap: 0.85rem;
+  width: max-content;
+  animation: correr 90s linear infinite;
+}
+.esteira-trilha.inversa { animation-direction: reverse; }
+.esteira-trilha .cartaz { width: 160px; flex: 0 0 auto; }
+.esteira:hover .esteira-trilha,
+.esteira:focus-within .esteira-trilha { animation-play-state: paused; }
+
+@keyframes correr {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esteira-trilha { animation: none; }
+  .esteira { overflow-x: auto; }
+  .cartaz { transition: none; }
+}
+
+/* Formulários e tabelas --------------------------------------------------- */
+.form-control, .form-select {
+  background: #100e19;
+  border: 1px solid var(--borda);
+  color: var(--texto);
+}
+.form-control:focus, .form-select:focus {
+  background: #100e19;
+  color: var(--texto);
+  border-color: var(--dourado);
+  box-shadow: none;
+}
+.form-control::placeholder { color: #7d7595; }
+.form-label { font-weight: 600; font-size: 0.92rem; }
+.form-text { color: var(--texto-suave); }
+
+.filtros { position: sticky; top: 0.5rem; z-index: 5; }
+
+.alert-success { background: #143024; border: 1px solid #2c6b4d; color: #b9f0d2; }
+.alert-danger { background: #35131d; border: 1px solid #7a2f45; color: #f6c4d1; }
+
+/* Detalhes ---------------------------------------------------------------- */
+.nota-inline { color: var(--dourado); font-weight: 700; }
+
+.lista-temas { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; }
+.lista-temas li {
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.lista-temas .tag-parte { border-color: var(--dourado); color: var(--dourado); }
+
+.chip {
+  display: inline-block;
+  border: 1px dashed var(--borda);
+  border-radius: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  margin: 0 0.25rem 0.25rem 0;
+}
+
+.citacao {
+  border-left: 3px solid var(--dourado);
+  background: rgba(245, 196, 94, 0.06);
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding: 1rem;
+  font-style: italic;
+}
+
+.rodape { border-top: 1px solid var(--borda); background: rgba(12, 11, 18, 0.7); }
+
+code { color: var(--dourado); }
+
+.modelo {
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.aula {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.aula:hover,
+.aula:focus-visible {
+  border-color: var(--dourado);
+  transform: translateY(-2px);
+}
+
+.aula-play {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--dourado);
+  color: #16130a;
+  box-shadow: 0 0 22px -6px var(--dourado);
+}

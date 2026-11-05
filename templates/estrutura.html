@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container">
+
+  <h1 class="h3">Estrutura da redação do ENEM</h1>
+  <p class="texto-suave">
+    Quatro parágrafos, uma função para cada um — e o filme certo para encaixar em cada momento.
+  </p>
+
+  {% set blocos = [
+    ('introducao', '1º parágrafo — Introdução', 'Apresente o tema, insira o repertório e feche com a tese (o problema que você vai defender).',
+     'Contextualização + repertório + tese', ['Como retrata o filme X (ano), ...', 'Diante disso, é evidente que ...']),
+    ('desenvolvimento', '2º parágrafo — Desenvolvimento I', 'Desenvolva a primeira causa do problema, comprovando com o repertório e explicando o vínculo com a tese.',
+     'Tópico frasal + repertório + análise + fechamento', ['Em primeiro lugar, ...', 'Isso ocorre porque ...']),
+    ('desenvolvimento', '3º parágrafo — Desenvolvimento II', 'Traga a segunda causa ou a consequência do problema, com outro repertório diferente do primeiro.',
+     'Tópico frasal + repertório + análise + fechamento', ['Além disso, ...', 'Como consequência, ...']),
+    ('conclusao', '4º parágrafo — Conclusão', 'Retome a tese e apresente a proposta de intervenção completa.',
+     'Agente + ação + meio + finalidade + detalhamento', ['Portanto, cabe ao Ministério da Educação ...', 'por meio de ..., a fim de ...'])
+  ] %}
+
+  {% for parte, titulo, funcao, formula, conectivos in blocos %}
+    <section class="painel mb-4" aria-labelledby="bloco-{{ loop.index }}">
+      <h2 class="h5 brilho" id="bloco-{{ loop.index }}">{{ titulo }}</h2>
+      <p class="mb-2">{{ funcao }}</p>
+      <p class="mb-2 small texto-suave"><strong>Fórmula:</strong> {{ formula }}</p>
+      <p class="mb-3 small texto-suave">
+        <strong>Conectivos úteis:</strong>
+        {% for c in conectivos %}<span class="chip">{{ c }}</span>{% endfor %}
+      </p>
+
+      <h3 class="h6">Filmes que rendem bem aqui</h3>
+      <div class="row row-cols-2 row-cols-lg-4 g-3">
+        {% for filme in por_parte[parte] %}
+          <div class="col">{% include "_cartaz.html" %}</div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="painel" aria-labelledby="titulo-competencias">
+    <h2 class="h5 brilho" id="titulo-competencias">As 5 competências avaliadas</h2>
+    <ol class="mb-0">
+      <li>Domínio da norma-padrão da língua escrita.</li>
+      <li>Compreensão da proposta e aplicação de repertório de várias áreas do conhecimento.</li>
+      <li>Seleção e organização de informações e argumentos em defesa de um ponto de vista.</li>
+      <li>Uso dos mecanismos linguísticos de coesão entre parágrafos e ideias.</li>
+      <li>Proposta de intervenção detalhada e que respeite os direitos humanos.</li>
+    </ol>
+  </section>
+
+  <section class="painel" aria-labelledby="titulo-modelos">
+    <h2 class="h5 brilho" id="titulo-modelos">Parágrafos-modelo prontos</h2>
+    <p class="small texto-suave">
+      Copie, troque as palavras-chave pelo tema da sua prova e adapte o fechamento.
+      Nunca decore igual: adapte sempre ao enunciado.
+    </p>
+
+    {% set modelos = [
+      ('Tema social (desigualdade, moradia, fome)', 'Parasita (2019)',
+       'No filme Parasita, de Bong Joon-ho, duas famílias vivem na mesma cidade, mas em mundos separados por escadas que sobem e descem conforme a renda. Fora das telas, no Brasil, a desigualdade socioeconômica permanece como obstáculo à cidadania plena, seja pela concentração histórica de renda, seja pela omissão do poder público na garantia de direitos básicos. Diante disso, torna-se necessário discutir os fatores que sustentam esse abismo social.'),
+      ('Educação e acesso ao conhecimento', 'Escritores da Liberdade (2007)',
+       'Em Escritores da Liberdade, uma professora transforma a rotina de estudantes marginalizados ao lhes oferecer algo simples: escuta e leitura. A obra evidencia que a educação só cumpre seu papel quando alcança quem mais precisa dela. No Brasil, contudo, a desigualdade no acesso à educação de qualidade ainda limita a mobilidade social, tanto pela precariedade da infraestrutura escolar quanto pela evasão motivada por vulnerabilidade econômica.'),
+      ('Meio ambiente e sustentabilidade', 'Estamira (2004)',
+       'O documentário Estamira, de Marcos Prado, revela o lixão de Gramacho como retrato de uma sociedade que descarta tanto resíduos quanto pessoas. Essa imagem dialoga com o cenário nacional, no qual a gestão inadequada de resíduos sólidos compromete o meio ambiente e a saúde pública, sobretudo em periferias urbanas. Tal realidade decorre da baixa efetividade das políticas de reciclagem e da naturalização do consumo excessivo.'),
+      ('Tecnologia, redes sociais e privacidade', 'O Dilema das Redes (2020)',
+       'O documentário O Dilema das Redes expõe como algoritmos são projetados para prender a atenção do usuário, transformando o comportamento humano em mercadoria. No Brasil, essa lógica se manifesta na disseminação de desinformação e no adoecimento mental de jovens, fenômenos impulsionados pela ausência de educação midiática nas escolas e pela fiscalização insuficiente das plataformas digitais.'),
+      ('Direitos das mulheres e minorias', 'Estrelas Além do Tempo (2016)',
+       'Em Estrelas Além do Tempo, mulheres negras essenciais à corrida espacial norte-americana precisam atravessar prédios inteiros apenas para usar um banheiro. A cena sintetiza como a competência feminina é reconhecida tarde e sob barreiras estruturais. No Brasil, a permanência da desigualdade de gênero no mercado de trabalho revela que o problema não é a capacidade das mulheres, mas a estrutura social que as subestima.'),
+      ('Conclusão-modelo (serve para qualquer tema)', 'Proposta de intervenção completa',
+       'Portanto, cabe ao Ministério da Educação, em parceria com as secretarias estaduais, promover a formação crítica dos estudantes por meio de projetos interdisciplinares em contraturno escolar, a fim de reduzir a desigualdade abordada, por intermédio de oficinas mensais com cinema, debate e produção textual, divulgadas nas redes sociais das escolas. Assim, o cenário retratado nas telas deixará de ser espelho da realidade brasileira.')
+    ] %}
+
+    {% for tema, filme, paragrafo in modelos %}
+      <article class="modelo mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+          <div>
+            <h3 class="h6 mb-0">{{ tema }}</h3>
+            <p class="small brilho mb-0">{{ filme }}</p>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-light btn-copiar"
+                  data-citacao="{{ paragrafo }}"
+                  aria-label="Copiar parágrafo-modelo sobre {{ tema }}">Copiar parágrafo</button>
+        </div>
+        <p class="mt-2 mb-0 small">{{ paragrafo }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="painel" aria-labelledby="titulo-conectivos">
+    <h2 class="h5 brilho" id="titulo-conectivos">Banco de conectivos</h2>
+    {% set conectivos_banco = [
+      ('Introduzir', ['Diante disso', 'Nesse contexto', 'Sob essa ótica']),
+      ('Somar', ['Ademais', 'Além disso', 'Outrossim', 'Somado a isso']),
+      ('Explicar', ['Isso porque', 'Uma vez que', 'Visto que', 'Dado que']),
+      ('Contrapor', ['Entretanto', 'Todavia', 'Em contrapartida']),
+      ('Concluir', ['Portanto', 'Logo', 'Dessa forma', 'Depreende-se que'])
+    ] %}
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+      {% for uso, itens in conectivos_banco %}
+        <div class="col">
+          <h3 class="h6 mb-2">{{ uso }}</h3>
+          {% for i in itens %}<span class="chip">{{ i }}</span>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="painel" aria-labelledby="titulo-videoaulas">
+    <h2 class="h5 brilho" id="titulo-videoaulas">Videoaulas</h2>
+    <p class="small texto-suave">Cada card abre a aula correspondente no YouTube, em uma nova aba.</p>
+    {% set videoaulas = [
+      ('Introdução nota 1000 em 5 minutos', 'Como contextualizar com repertório e fechar a tese sem enrolar.', 'introdução redação enem nota 1000 passo a passo'),
+      ('Desenvolvimento: argumento + repertório', 'Estrutura do parágrafo argumentativo e o erro de citar sem explicar.', 'parágrafo de desenvolvimento redação enem argumentação'),
+      ('Proposta de intervenção completa', 'Os 5 elementos (agente, ação, meio, finalidade, detalhamento) na prática.', 'proposta de intervenção redação enem 5 elementos'),
+      ('As 5 competências explicadas', 'O que o corretor procura em cada competência e como não perder pontos.', 'competências redação enem explicadas corretor'),
+      ('Repertório sociocultural com filmes', 'Como transformar um filme em repertório legitimado e produtivo.', 'repertório sociocultural filmes redação enem'),
+      ('Correção de redação nota 1000 comentada', 'Leitura de uma redação real com comentário competência por competência.', 'redação nota 1000 enem comentada correção')
+    ] %}
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+      {% for titulo, descricao, busca in videoaulas %}
+        <div class="col">
+          <a class="aula" target="_blank" rel="noopener"
+             href="https://www.youtube.com/results?search_query={{ busca | urlencode }}">
+            <span class="aula-play" aria-hidden="true">&#9654;</span>
+            <span>
+              <strong>{{ titulo }}</strong>
+              <span class="d-block small texto-suave">{{ descricao }}</span>
+            </span>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{# Cartão reutilizável de cartaz. Espera a variável 'filme'. #}
+<a class="cartaz" href="{{ url_for('filme_detalhe', filme_id=filme.id) }}"
+   aria-label="Ver detalhes de {{ filme.titulo }}, {{ filme.ano }}, nota IMDb {{ '%.1f'|format(filme.imdb) }}">
+  <img src="{{ filme.cartaz|cartaz }}" alt="Cartaz do filme {{ filme.titulo }}" loading="lazy" width="300" height="450">
+  <span class="nota" aria-hidden="true">&#9733; {{ '%.1f'|format(filme.imdb) }}</span>
+  <span class="cartaz-info">
+    <strong>{{ filme.titulo }}</strong>
+    <small>{{ filme.ano }} · {{ rotulo_parte[filme.parte] }}</small>
+  </span>
+</a>

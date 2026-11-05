@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<section class="container hero" aria-labelledby="titulo-hero">
+  <p class="selo">Repertório sociocultural · ENEM</p>
+  <h1 id="titulo-hero" class="display-5 fw-bold">
+    Filmes que <span class="brilho">viram argumento</span> na sua redação
+  </h1>
+  <p class="lead texto-suave">
+    {{ total }} filmes catalogados em {{ total_temas }} temas, com nota do IMDb, sinopse,
+    orientação de uso por parágrafo, citação pronta para copiar e links para assistir.
+  </p>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-dourado" href="{{ url_for('filmes_lista') }}">Ver o catálogo</a>
+    <a class="btn btn-contorno" href="{{ url_for('estrutura') }}">Estrutura da redação</a>
+  </div>
+</section>
+
+<section class="mt-5" aria-labelledby="titulo-esteira">
+  <h2 id="titulo-esteira" class="container h4">Cartazes em destaque</h2>
+  <p class="container texto-suave small">
+    As faixas abaixo passam sozinhas e param quando você posiciona o cursor ou o foco do teclado.
+  </p>
+
+  <div class="esteira" data-esteira>
+    <div class="esteira-trilha">
+      {% for filme in esteira_a + esteira_a %}{% include "_cartaz.html" %}{% endfor %}
+    </div>
+  </div>
+  <div class="esteira" data-esteira>
+    <div class="esteira-trilha inversa">
+      {% for filme in esteira_b + esteira_b %}{% include "_cartaz.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="container mt-5" aria-labelledby="titulo-destaques">
+  <h2 id="titulo-destaques" class="h4">Mais bem avaliados no IMDb</h2>
+  <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-6 g-3 mt-1">
+    {% for filme in destaques %}
+      <div class="col">{% include "_cartaz.html" %}</div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container mt-5" aria-labelledby="titulo-como">
+  <h2 id="titulo-como" class="h4">Como usar o CineRepertório</h2>
+  <div class="row g-3 mt-1">
+    {% set passos = [
+      ('1. Escolha o tema', 'Filtre o catálogo pelo tema que caiu na prova: desigualdade, tecnologia, saúde mental, democracia e outros.'),
+      ('2. Encaixe no parágrafo', 'Cada filme indica se rende mais na introdução, no desenvolvimento ou na conclusão.'),
+      ('3. Copie a citação', 'A citação pronta já está escrita em linguagem formal, com título e ano entre parênteses.'),
+      ('4. Salve sua anotação', 'Registre sua própria versão do repertório na página de anotações e revise antes da prova.')
+    ] %}
+    {% for titulo, texto in passos %}
+      <div class="col-12 col-md-6 col-lg-3">
+        <article class="painel h-100">
+          <h3 class="h6 brilho">{{ titulo }}</h3>
+          <p class="mb-0 small texto-suave">{{ texto }}</p>
+        </article>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

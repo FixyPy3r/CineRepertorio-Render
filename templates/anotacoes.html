@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container">
+
+  <h1 class="h3">Minhas anotações de repertório</h1>
+  <p class="texto-suave">
+    Escreva com suas palavras como você usaria cada filme. As anotações ficam salvas na tabela
+    <code>anotacoes</code> do banco de dados e aparecem também na página do filme.
+  </p>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-5">
+      <form class="painel" method="post" action="{{ url_for('anotacoes') }}" novalidate>
+        <h2 class="h5">Nova anotação</h2>
+
+        <div class="mb-3">
+          <label class="form-label" for="filme_id">Filme *</label>
+          <select class="form-select" id="filme_id" name="filme_id" required>
+            <option value="">Selecione um filme</option>
+            {% for f in filmes %}
+              <option value="{{ f.id }}">{{ f.titulo }} ({{ f.ano }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="parte">Parágrafo em que vou usar *</label>
+          <select class="form-select" id="parte" name="parte" required>
+            {% for p in partes %}
+              <option value="{{ p }}">{{ rotulo_parte[p] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="texto">Anotação *</label>
+          <textarea class="form-control" id="texto" name="texto" rows="4" required minlength="15"
+                    aria-describedby="ajuda-texto"
+                    placeholder="Ex.: Usar Parasita para mostrar que a desigualdade também é espacial..."></textarea>
+          <div class="form-text" id="ajuda-texto">Mínimo de 15 caracteres.</div>
+        </div>
+
+        <button class="btn btn-dourado" type="submit">Salvar anotação</button>
+      </form>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <h2 class="h5">Anotações salvas ({{ anotacoes|length }})</h2>
+      {% if anotacoes %}
+        <ul class="list-unstyled">
+          {% for a in anotacoes|reverse %}
+            <li class="painel mb-3">
+              <div class="d-flex justify-content-between align-items-start gap-3">
+                <div>
+                  <p class="mb-1">
+                    <a class="link-dourado fw-semibold" href="{{ url_for('filme_detalhe', filme_id=a.filme_id) }}">
+                      {{ titulos.get(a.filme_id, 'Filme removido') }}
+                    </a>
+                  </p>
+                  <p class="mb-1 small texto-suave">{{ rotulo_parte[a.parte] }} · salvo em {{ a.criado_em }}</p>
+                  <p class="mb-0">{{ a.texto }}</p>
+                </div>
+                <form method="post" action="{{ url_for('anotacao_excluir', anotacao_id=a.id) }}"
+                      onsubmit="return confirm('Excluir esta anotação?');">
+                  <button class="btn btn-perigo btn-sm" type="submit"
+                          aria-label="Excluir anotação sobre {{ titulos.get(a.filme_id, 'filme removido') }}">Excluir</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="painel">
+          <p class="mb-0 texto-suave">Você ainda não salvou nenhuma anotação. Use o formulário ao lado.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
