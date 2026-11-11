@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container">
+
+  <h1 class="h3">Catálogo de filmes</h1>
+  <p class="texto-suave">Use os filtros para encontrar o repertório certo para o tema da sua redação.</p>
+
+  <form class="painel filtros" method="get" action="{{ url_for('filmes_lista') }}" role="search" aria-label="Filtrar filmes">
+    <div class="row g-3">
+      <div class="col-12 col-lg-4">
+        <label class="form-label" for="busca">Buscar por título, direção ou tema</label>
+        <input class="form-control" type="search" id="busca" name="busca" value="{{ busca }}"
+               placeholder="Ex.: Parasita, desigualdade...">
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label" for="tema">Tema</label>
+        <select class="form-select" id="tema" name="tema">
+          <option value="">Todos os temas</option>
+          {% for t in temas %}
+            <option value="{{ t }}" {% if t == tema %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label" for="parte">Parágrafo</label>
+        <select class="form-select" id="parte" name="parte">
+          <option value="">Qualquer parágrafo</option>
+          {% for p in partes %}
+            <option value="{{ p }}" {% if p == parte %}selected{% endif %}>{{ rotulo_parte[p] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-lg-2">
+        <label class="form-label" for="ordem">Ordenar por</label>
+        <select class="form-select" id="ordem" name="ordem">
+          <option value="imdb" {% if ordem == 'imdb' %}selected{% endif %}>Nota IMDb</option>
+          <option value="ano" {% if ordem == 'ano' %}selected{% endif %}>Mais recentes</option>
+          <option value="titulo" {% if ordem == 'titulo' %}selected{% endif %}>Título (A–Z)</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button class="btn btn-dourado" type="submit">Aplicar filtros</button>
+      <a class="btn btn-contorno" href="{{ url_for('filmes_lista') }}">Limpar</a>
+    </div>
+  </form>
+
+  <p class="mt-4 texto-suave" role="status" aria-live="polite">
+    {{ filmes|length }} filme(s) encontrado(s).
+  </p>
+
+  {% if filmes %}
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-5 g-3">
+      {% for filme in filmes %}
+        <div class="col">{% include "_cartaz.html" %}</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="painel text-center">
+      <p class="mb-2">Nenhum filme corresponde a esses filtros.</p>
+      <a class="btn btn-contorno btn-sm" href="{{ url_for('filmes_lista') }}">Ver todos os filmes</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

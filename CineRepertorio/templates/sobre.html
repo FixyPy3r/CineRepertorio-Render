@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container pb-5 institucional">
+
+  <!-- Abertura ----------------------------------------------------------- -->
+  <section class="inst-hero" aria-labelledby="sobre-titulo">
+    <span class="selo">Sobre nós</span>
+    <h1 class="inst-titulo mt-3" id="sobre-titulo">
+      Transformamos cinema em <span class="brilho">argumento</span>.
+    </h1>
+    <p class="inst-lead texto-suave">
+      O CineRepertório é uma plataforma educacional que ajuda estudantes a usar filmes como repertório
+      sociocultural legitimado na redação do ENEM — com curadoria, contexto e linguagem formal prontos para a prova.
+    </p>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <a class="btn btn-dourado" href="{{ url_for('filmes_lista') }}">Explorar o catálogo</a>
+      <a class="btn btn-contorno" href="#missao-visao-valores">Missão, visão e valores</a>
+    </div>
+  </section>
+
+  <!-- Números ------------------------------------------------------------ -->
+  <section class="inst-numeros" aria-label="O CineRepertório em números">
+    <div class="inst-numero">
+      <strong>{{ total }}</strong>
+      <span>filmes no catálogo</span>
+    </div>
+    <div class="inst-numero">
+      <strong>{{ total_usuarios }}</strong>
+      <span>estudante(s) cadastrado(s)</span>
+    </div>
+    <div class="inst-numero">
+      <strong>{{ total_anotacoes }}</strong>
+      <span>anotação(ões) de repertório</span>
+    </div>
+    <div class="inst-numero">
+      <strong>24h</strong>
+      <span>assistente Briggs disponível</span>
+    </div>
+  </section>
+  <p class="visually-hidden">
+    Hoje o catálogo tem {{ total }} filmes e {{ total_anotacoes }} anotação(ões) pessoal(is) salva(s).
+  </p>
+
+  <!-- Visão geral -------------------------------------------------------- -->
+  <section class="inst-bloco" aria-labelledby="quem-somos">
+    <div class="row g-4 align-items-start">
+      <div class="col-lg-5">
+        <p class="inst-rotulo">Quem somos</p>
+        <h2 class="inst-subtitulo" id="quem-somos">Uma ponte entre a tela e a folha de redação</h2>
+      </div>
+      <div class="col-lg-7">
+        <p class="texto-suave">
+          Todo ano, milhões de estudantes enfrentam o mesmo desafio na redação do ENEM: encontrar um repertório
+          que seja <strong>legítimo, pertinente ao tema e bem articulado</strong> com o argumento. Filmes são
+          uma das fontes mais ricas para isso — mas saber <em>qual</em> filme usar, <em>em que parágrafo</em> e
+          <em>com quais palavras</em> costuma ser o que separa uma citação decorativa de uma competência 2 bem pontuada.
+        </p>
+        <p class="texto-suave mb-0">
+          O CineRepertório nasceu para resolver exatamente isso. Reunimos títulos nacionais e internacionais,
+          organizados por tema social, com nota do IMDb, sinopse, indicação do parágrafo ideal, citação pronta em
+          linguagem formal e caminhos para assistir de forma legal. Somos um projeto acadêmico da
+          UC35 — Projeto Integrador Back-end, construído com a seriedade de um produto real.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Como funciona ------------------------------------------------------ -->
+  <section class="inst-bloco" aria-labelledby="como-funciona">
+    <p class="inst-rotulo">Como funciona</p>
+    <h2 class="inst-subtitulo" id="como-funciona">Do tema da prova ao parágrafo pronto, em quatro passos</h2>
+    <ol class="inst-passos mt-4">
+      <li>
+        <span class="inst-passo-num" aria-hidden="true">1</span>
+        <h3 class="h6">Pesquise pelo tema</h3>
+        <p class="texto-suave small mb-0">Busque por assunto, título, parte da redação ou ordene pela nota do IMDb.</p>
+      </li>
+      <li>
+        <span class="inst-passo-num" aria-hidden="true">2</span>
+        <h3 class="h6">Entenda o contexto</h3>
+        <p class="texto-suave small mb-0">Leia a sinopse, os temas relacionados e como o filme dialoga com problemas sociais.</p>
+      </li>
+      <li>
+        <span class="inst-passo-num" aria-hidden="true">3</span>
+        <h3 class="h6">Use a citação pronta</h3>
+        <p class="texto-suave small mb-0">Adapte a frase em linguagem formal ao seu argumento e ao parágrafo indicado.</p>
+      </li>
+      <li>
+        <span class="inst-passo-num" aria-hidden="true">4</span>
+        <h3 class="h6">Salve e revise</h3>
+        <p class="texto-suave small mb-0">Guarde anotações na sua conta e tire dúvidas com o Briggs, nosso assistente de IA.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- O que oferecemos --------------------------------------------------- -->
+  <section class="inst-bloco" aria-labelledby="oferecemos">
+    <p class="inst-rotulo">O que oferecemos</p>
+    <h2 class="inst-subtitulo" id="oferecemos">Uma plataforma completa para o seu repertório</h2>
+    <div class="row g-3 mt-2">
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">🎬</span>
+          <h3 class="h6">Catálogo curado</h3>
+          <p class="texto-suave small mb-0">Filmes escolhidos pelo potencial argumentativo, com temas, nota do IMDb e sinopse objetiva.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">✍️</span>
+          <h3 class="h6">Citação em linguagem formal</h3>
+          <p class="texto-suave small mb-0">Uma frase pronta para cada filme, indicando se rende melhor na introdução, no desenvolvimento ou na conclusão.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">🧭</span>
+          <h3 class="h6">Guia da estrutura</h3>
+          <p class="texto-suave small mb-0">Um mapa da redação dissertativo-argumentativa com sugestões de filmes para cada parte do texto.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">🤖</span>
+          <h3 class="h6">Briggs, assistente de IA</h3>
+          <p class="texto-suave small mb-0">Converse por texto, voz ou foto da redação para receber orientações, ideias e revisões.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">📒</span>
+          <h3 class="h6">Anotações pessoais</h3>
+          <p class="texto-suave small mb-0">Monte seu próprio banco de repertórios, ligado a cada filme e a cada parte da redação.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <article class="inst-cartao h-100">
+          <span class="inst-icone" aria-hidden="true">♿</span>
+          <h3 class="h6">Acessibilidade de verdade</h3>
+          <p class="texto-suave small mb-0">Modos de daltonismo, alto contraste, Libras, leitura em voz alta e navegação por teclado.
+            <a class="link-dourado" href="{{ url_for('acessibilidade') }}">Conheça o programa</a>.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Missão, visão e valores ------------------------------------------- -->
+  <section class="inst-bloco inst-mvv" id="missao-visao-valores" aria-labelledby="mvv-titulo">
+    <p class="inst-rotulo">Nosso propósito</p>
+    <h2 class="inst-subtitulo" id="mvv-titulo">Missão, visão e valores</h2>
+
+    <div class="row g-3 mt-2">
+      <div class="col-lg-6">
+        <article class="inst-mvv-cartao h-100" aria-labelledby="missao">
+          <p class="inst-rotulo mb-1">Missão</p>
+          <h3 class="h5" id="missao">Democratizar o repertório sociocultural</h3>
+          <p class="texto-suave mb-0">
+            Ajudar estudantes de todas as origens a transformar o cinema em argumentos sólidos, oferecendo
+            repertório confiável, contextualizado e acessível — para que nenhuma boa ideia fique fora da redação
+            por falta de referência.
+          </p>
+        </article>
+      </div>
+      <div class="col-lg-6">
+        <article class="inst-mvv-cartao h-100" aria-labelledby="visao">
+          <p class="inst-rotulo mb-1">Visão</p>
+          <h3 class="h5" id="visao">Ser a referência em repertório pelo cinema</h3>
+          <p class="texto-suave mb-0">
+            Tornar-se a plataforma brasileira mais lembrada quando o assunto é usar filmes na redação,
+            reconhecida pela qualidade da curadoria, pela inclusão e por uma tecnologia que aproxima
+            cultura e educação.
+          </p>
+        </article>
+      </div>
+    </div>
+
+    <h3 class="h5 mt-4 mb-3" id="valores">Valores</h3>
+    <ul class="inst-valores" aria-labelledby="valores">
+      <li>
+        <strong>Educação para todos</strong>
+        <span class="texto-suave small">O conteúdo essencial é gratuito e pensado para quem estuda com poucos recursos.</span>
+      </li>
+      <li>
+        <strong>Rigor e credibilidade</strong>
+        <span class="texto-suave small">Repertório verificado, citações em linguagem formal e informações com fonte.</span>
+      </li>
+      <li>
+        <strong>Inclusão desde o projeto</strong>
+        <span class="texto-suave small">Acessibilidade não é extra: é parte de cada página que construímos.</span>
+      </li>
+      <li>
+        <strong>Privacidade e segurança</strong>
+        <span class="texto-suave small">Senhas protegidas por criptografia e verificação em duas etapas opcional.</span>
+      </li>
+      <li>
+        <strong>Respeito à cultura</strong>
+        <span class="texto-suave small">Valorizamos o cinema e indicamos apenas formas legais de assistir aos filmes.</span>
+      </li>
+      <li>
+        <strong>Curiosidade e senso crítico</strong>
+        <span class="texto-suave small">Incentivamos o estudante a pensar o filme, não só a decorar a citação.</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Compromissos ------------------------------------------------------- -->
+  <section class="inst-bloco" aria-labelledby="compromissos">
+    <p class="inst-rotulo">Nossos compromissos</p>
+    <h2 class="inst-subtitulo" id="compromissos">Confiança se constrói com transparência</h2>
+    <div class="row g-3 mt-2">
+      <div class="col-md-6">
+        <article class="inst-cartao h-100">
+          <h3 class="h6 brilho">Seus dados</h3>
+          <p class="texto-suave small mb-0">Guardamos apenas o necessário para sua conta funcionar. A senha original nunca é armazenada —
+            somente um hash seguro com salt. Você pode ativar a verificação em duas etapas ao criar a conta.</p>
+        </article>
+      </div>
+      <div class="col-md-6">
+        <article class="inst-cartao h-100">
+          <h3 class="h6 brilho">Uso responsável de IA</h3>
+          <p class="texto-suave small mb-0">O Briggs orienta e revisa, mas não substitui o seu raciocínio. Ele recusa pedidos perigosos
+            e incentiva você a escrever com suas próprias palavras.</p>
+        </article>
+      </div>
+      <div class="col-md-6">
+        <article class="inst-cartao h-100">
+          <h3 class="h6 brilho">Direitos autorais</h3>
+          <p class="texto-suave small mb-0">Indicamos somente serviços legais para assistir. Alguns cartazes são fornecidos pelo TMDB;
+            este produto usa a API do TMDB, mas não é endossado nem certificado por ele.</p>
+        </article>
+      </div>
+      <div class="col-md-6">
+        <article class="inst-cartao h-100">
+          <h3 class="h6 brilho">Escutamos você</h3>
+          <p class="texto-suave small mb-0">Encontrou um erro, quer sugerir um filme ou relatar uma barreira de acessibilidade?
+            <a class="link-dourado" href="{{ url_for('notificacoes') }}">Fale com a equipe</a>.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chamada final ------------------------------------------------------ -->
+  <section class="inst-chamada" aria-labelledby="chamada">
+    <h2 class="h4 mb-2" id="chamada">Pronto para encontrar o seu próximo repertório?</h2>
+    <p class="texto-suave mb-3">Crie sua conta gratuita, salve anotações e estude no seu ritmo.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <a class="btn btn-dourado" href="{{ url_for('criar_conta') }}">Criar conta</a>
+      <a class="btn btn-contorno" href="{{ url_for('assistente') }}">Conversar com o Briggs</a>
+    </div>
+  </section>
+
+  <!-- Documentação técnica (projeto acadêmico) -------------------------- -->
+  <details class="painel mt-4 inst-tecnico">
+    <summary class="h6 mb-0">Documentação técnica: rotas da aplicação</summary>
+    <div class="table-responsive mt-3">
+      <table class="table table-dark table-striped align-middle mb-0">
+        <caption class="visually-hidden">Lista de rotas, métodos HTTP e funções</caption>
+        <thead>
+          <tr><th scope="col">Rota</th><th scope="col">Método</th><th scope="col">Função</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/</td><td>GET</td><td>Página inicial com carrosséis de cartazes</td></tr>
+          <tr><td>/filmes</td><td>GET</td><td>Catálogo com busca, filtros e ordenação (READ)</td></tr>
+          <tr><td>/filmes/&lt;id&gt;</td><td>GET</td><td>Detalhe do filme, citação e lojas</td></tr>
+          <tr><td>/conta/criar</td><td>GET, POST</td><td>Cadastro de usuário (CREATE)</td></tr>
+          <tr><td>/conta/entrar</td><td>GET, POST</td><td>Login e troca de conta</td></tr>
+          <tr><td>/conta/verificar</td><td>POST</td><td>Verificação em duas etapas (A2F)</td></tr>
+          <tr><td>/conta/sair</td><td>GET</td><td>Encerrar a sessão</td></tr>
+          <tr><td>/anotacoes</td><td>GET, POST</td><td>Anotações de repertório (READ e CREATE)</td></tr>
+          <tr><td>/anotacoes/&lt;id&gt;/editar</td><td>POST</td><td>Edição de anotação (UPDATE)</td></tr>
+          <tr><td>/anotacoes/&lt;id&gt;/excluir</td><td>POST</td><td>Exclusão de anotação (DELETE)</td></tr>
+          <tr><td>/assistente</td><td>GET</td><td>Assistente de redação com IA</td></tr>
+          <tr><td>/api/assistente</td><td>POST</td><td>API JSON do assistente de IA</td></tr>
+          <tr><td>/api/filmes</td><td>GET</td><td>API JSON: lista de filmes (busca, tema, parte e ordem)</td></tr>
+          <tr><td>/api/filmes/&lt;id&gt;</td><td>GET</td><td>API JSON: um filme com seus temas</td></tr>
+          <tr><td>/estrutura</td><td>GET</td><td>Guia da estrutura da redação</td></tr>
+          <tr><td>/notificacoes</td><td>GET, POST</td><td>Enviar mensagem à equipe</td></tr>
+          <tr><td>/acessibilidade</td><td>GET</td><td>Programa de acessibilidade</td></tr>
+          <tr><td>/sobre</td><td>GET</td><td>Sobre o CineRepertório</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}

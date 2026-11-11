@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container text-center py-5">
+  <h1 class="display-6">Página não encontrada</h1>
+  <p class="texto-suave">O endereço acessado não existe ou o filme foi removido do catálogo.</p>
+  <a class="btn btn-dourado" href="{{ url_for('index') }}">Voltar ao início</a>
+</div>
+{% endblock %}

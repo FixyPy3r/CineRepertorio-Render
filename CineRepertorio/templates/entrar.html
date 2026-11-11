@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-5">
+      <h1 class="h3">Entrar ou <span class="brilho">trocar de conta</span></h1>
+      <form class="painel p-4 mt-3" method="post" novalidate>
+        <input type="hidden" name="proxima" value="{{ proxima }}">
+        <label class="form-label" for="email">E-mail</label>
+        <input class="form-control" type="email" id="email" name="email" required autocomplete="email" value="{{ email }}">
+        <label class="form-label mt-3" for="senha">Senha</label>
+        <input class="form-control" type="password" id="senha" name="senha" required autocomplete="current-password">
+        <button class="btn btn-dourado mt-4 w-100" type="submit">Entrar</button>
+      </form>
+      <p class="texto-suave small mt-3">
+        Se a conta tiver A2F ativada, enviaremos um código de verificação para o e-mail antes de liberar o acesso.
+      </p>
+      <a class="btn btn-contorno btn-sm" href="{{ url_for('criar_conta') }}">Criar uma nova conta</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
