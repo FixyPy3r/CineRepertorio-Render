@@ -2,10 +2,22 @@
 {% block conteudo %}
 <div class="container">
 
-  <h1 class="h3">Estrutura da redação do ENEM</h1>
-  <p class="texto-suave">
-    Quatro parágrafos, uma função para cada um — e o filme certo para encaixar em cada momento.
-  </p>
+  <section class="painel painel-assistente p-4 p-lg-5 mb-4">
+    <span class="assistente-selo">GUIA DE ESCRITA</span>
+    <h1 class="h3 mb-2">Estruture sua redação <span class="brilho">cena por cena</span></h1>
+    <p class="texto-suave mb-3">Uma boa redação não nasce de frases bonitas isoladas. Ela começa com um projeto de texto: uma tese clara, dois argumentos que conversam entre si e uma conclusão que responde ao problema.</p>
+    <button class="btn btn-dourado btn-sm" type="button" data-abrir-ia>Planejar com Briggs</button>
+  </section>
+
+  <section class="painel p-4 mb-4" aria-labelledby="titulo-projeto-texto">
+    <h2 class="h5 brilho" id="titulo-projeto-texto">Antes de escrever: monte o projeto de texto</h2>
+    <div class="row g-3 assistente-planejamento">
+      <div class="col-md-6 col-xl-3"><article><span>01</span><h3>Recorte</h3><p>O que exatamente o tema pede? Delimite o problema sem fugir da proposta.</p></article></div>
+      <div class="col-md-6 col-xl-3"><article><span>02</span><h3>Tese</h3><p>Responda ao tema em uma frase que mostre seu ponto de vista.</p></article></div>
+      <div class="col-md-6 col-xl-3"><article><span>03</span><h3>Dois argumentos</h3><p>Escolha duas causas, consequências ou dimensões diferentes para desenvolver.</p></article></div>
+      <div class="col-md-6 col-xl-3"><article><span>04</span><h3>Repertório</h3><p>Selecione filmes, dados, leis ou conceitos que você conheça e consiga explicar.</p></article></div>
+    </div>
+  </section>
 
   {% set blocos = [
     ('introducao', '1º parágrafo — Introdução', 'Apresente o tema, insira o repertório e feche com a tese (o problema que você vai defender).',
@@ -128,6 +140,22 @@
             </span>
           </a>
         </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="painel p-4 mt-4" aria-labelledby="titulo-revisao-final">
+    <h2 class="h5 brilho" id="titulo-revisao-final">Checklist antes de entregar</h2>
+    <div class="row g-2 assistente-checklist">
+      {% for item in [
+        'Respondi exatamente ao recorte do tema?',
+        'Minha tese apresenta dois eixos argumentativos?',
+        'Cada desenvolvimento explica um argumento, em vez de apenas citar repertório?',
+        'Usei conectivos com sentido e sem repetição excessiva?',
+        'A conclusão apresenta agente, ação, meio, finalidade e detalhamento?',
+        'Revisei pontuação, concordância, acentuação e clareza?'
+      ] %}
+        <div class="col-md-6"><label><input type="checkbox"> <span>{{ item }}</span></label></div>
       {% endfor %}
     </div>
   </section>

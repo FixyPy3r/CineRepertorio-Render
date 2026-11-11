@@ -5,7 +5,7 @@
   <h1 class="h3">Minhas anotações de repertório</h1>
   <p class="texto-suave">
     Escreva com suas palavras como você usaria cada filme. As anotações ficam salvas na tabela
-    <code>anotacoes</code> do banco de dados e aparecem também na página do filme.
+    <code>anotacoes</code> do banco de dados, vinculadas à sua conta, e aparecem também na página do filme.
   </p>
 
   <div class="row g-4">
@@ -60,10 +60,29 @@
                   <p class="mb-1 small texto-suave">{{ rotulo_parte[a.parte] }} · salvo em {{ a.criado_em }}</p>
                   <p class="mb-0">{{ a.texto }}</p>
                 </div>
-                <form method="post" action="{{ url_for('anotacao_excluir', anotacao_id=a.id) }}"
-                      onsubmit="return confirm('Excluir esta anotação?');">
-                  <button class="btn btn-perigo btn-sm" type="submit"
-                          aria-label="Excluir anotação sobre {{ titulos.get(a.filme_id, 'filme removido') }}">Excluir</button>
+                <div class="d-flex flex-column gap-2">
+                  <button class="btn btn-contorno btn-sm" type="button" data-bs-toggle="collapse"
+                          data-bs-target="#editar-{{ a.id }}" aria-expanded="false"
+                          aria-controls="editar-{{ a.id }}"
+                          aria-label="Editar anotação sobre {{ titulos.get(a.filme_id, 'filme removido') }}">Editar</button>
+                  <form method="post" action="{{ url_for('anotacao_excluir', anotacao_id=a.id) }}"
+                        onsubmit="return confirm('Excluir esta anotação?');">
+                    <button class="btn btn-perigo btn-sm w-100" type="submit"
+                            aria-label="Excluir anotação sobre {{ titulos.get(a.filme_id, 'filme removido') }}">Excluir</button>
+                  </form>
+                </div>
+              </div>
+              <div class="collapse mt-3" id="editar-{{ a.id }}">
+                <form method="post" action="{{ url_for('anotacao_editar', anotacao_id=a.id) }}">
+                  <label class="form-label" for="texto-{{ a.id }}">Editar anotação</label>
+                  <textarea class="form-control" id="texto-{{ a.id }}" name="texto" rows="3" minlength="15" required>{{ a.texto }}</textarea>
+                  <label class="form-label mt-2" for="parte-{{ a.id }}">Parágrafo</label>
+                  <select class="form-select" id="parte-{{ a.id }}" name="parte">
+                    {% for p in partes %}
+                      <option value="{{ p }}" {% if p == a.parte %}selected{% endif %}>{{ rotulo_parte[p] }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-dourado btn-sm mt-3" type="submit">Salvar alterações</button>
                 </form>
               </div>
             </li>

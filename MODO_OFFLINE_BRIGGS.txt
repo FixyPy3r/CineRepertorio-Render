@@ -1,0 +1,39 @@
+BRIGGS — MODO OFFLINE EXPANDIDO
+================================
+
+Você não precisa configurar API, criar chave ou conectar um serviço pago para
+conversar com o Briggs. O modo offline expandido é o padrão do CineRepertório.
+
+Como funciona
+-------------
+- br_local.py contém a biblioteca temática e o motor de composição de respostas.
+- O motor combina 12 aberturas, 12 tons, 18 transições, 16 molduras de exemplo,
+  14 perspectivas, 18 encerramentos, 8 formatos e 6 níveis de detalhe.
+- Isso permite 501.645.312 combinações teóricas para respostas explicativas.
+- Esses números representam combinações possíveis, não centenas de milhões de
+  respostas completas pré-escritas nem capacidade irrestrita de raciocínio.
+- O Briggs mantém o contexto recente da conversa nesta aba do navegador.
+
+Temas disponíveis
+-----------------
+O motor inclui conteúdo introdutório sobre matemática, biologia, física,
+química, história, geografia, português, inglês, programação, tecnologia,
+inteligência artificial, filosofia, literatura, meio ambiente, cinema, redação,
+estudos, economia básica, saúde e bem-estar geral, sociologia, criatividade,
+planejamento e segurança na internet, além de conceitos específicos.
+
+Limites importantes
+-------------------
+- O Briggs não consulta a internet neste modo e não sabe automaticamente de
+  notícias, preços, resultados ou acontecimentos recentes.
+- Para temas muito especializados ou que não estejam na biblioteca, ele oferece
+  uma estrutura de análise e pode pedir que a pergunta seja delimitada.
+- Use fontes confiáveis para confirmar fatos importantes.
+- O apoio de redação é educativo e não representa uma nota oficial do ENEM.
+
+API remota opcional
+------------------
+A integração remota continua disponível apenas como opção futura. O modo remoto
+só será usado quando BRIGGS_USE_API=true e uma chave válida estiver configurada
+no servidor. Sem essa ativação explícita, o Briggs permanece no modo offline,
+mesmo que exista uma variável OPENAI_API_KEY no ambiente.

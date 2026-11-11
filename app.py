@@ -2,27 +2,75 @@
 CineRepertório — UC35: Projeto Integrador Back-end
 Aplicação web de repertórios socioculturais (filmes) para a redação do ENEM.
 
-Armazenamento: banco relacional SQLite (banco.db), com as tabelas
-filmes, temas, filme_temas e anotacoes (relacionadas por chave estrangeira).
-Operações: CRUD completo de filmes e de anotações de repertório,
-consultas com JOIN e rotas que devolvem JSON (API).
+Armazenamento: banco relacional SQLite (banco.db) com as tabelas
+filmes, temas, filme_temas, usuarios e anotacoes, ligadas por chaves estrangeiras.
+Módulos: banco.py (conexão), contas.py (login, cadastro e A2F) e
+ia.py (conversa geral do Briggs e apoio à redação).
+CRUD completo: anotações de repertório do usuário (criar, ler, editar, excluir).
+O catálogo de filmes é somente leitura e se renova sozinho a cada dia
+(seleção rotativa por data), sem edição manual.
+Consultas com JOIN: catálogo, filmes relacionados e anotações.
+API em JSON: /api/filmes, /api/filmes/<id> e /api/assistente.
 """
 
+
+
 import os
+import random
+import smtplib
+import ssl
+from email.message import EmailMessage
 import re
-import sqlite3
 import unicodedata
-from datetime import datetime
+from datetime import date, datetime
+from functools import wraps
 from urllib.parse import quote_plus
+import secrets
+import time
 
-from flask import Flask, flash, g, jsonify, redirect, render_template, request, url_for
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("DATABASE", os.path.join(BASE_DIR, "banco.db"))
-SCHEMA_SQL = os.path.join(BASE_DIR, "sql", "schema.sql")
+def carregar_arquivo_env(caminho=None):
+    """Carrega variáveis de um .env local sem sobrescrever o ambiente do sistema."""
+    caminho = caminho or os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.isfile(caminho):
+        return
+    try:
+        with open(caminho, encoding="utf-8") as arquivo_env:
+            for linha in arquivo_env:
+                linha = linha.strip()
+                if not linha or linha.startswith("#") or "=" not in linha:
+                    continue
+                chave, valor = linha.split("=", 1)
+                chave = chave.strip()
+                valor = valor.strip().strip('"').strip("'")
+                if chave and chave.replace("_", "").isalnum():
+                    os.environ.setdefault(chave, valor)
+    except OSError as erro:
+        raise RuntimeError(f"Não foi possível ler o arquivo .env: {erro}") from erro
+
+
+carregar_arquivo_env()
+
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+
+import banco
+import contas
+import ia
+from banco import contar, get_db
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "cinerepertorio-uc35")
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
+app.secret_key = os.environ.get("CINE_SECRET") or secrets.token_hex(32)
+app.teardown_appcontext(banco.fechar_db)
 
 PARTES = ["introducao", "desenvolvimento", "conclusao"]
 ROTULO_PARTE = {
@@ -34,42 +82,10 @@ COR_PADRAO = "from-amber-500/30 to-slate-900/60"
 
 
 # --------------------------------------------------------------------------
-# Camada de persistência (SQLite)
+# Camada de persistência (SQLite) — filmes
 # --------------------------------------------------------------------------
-def conectar():
-    """Abre uma conexão com o banco, com linhas acessíveis por nome de coluna."""
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    con.execute("PRAGMA foreign_keys = ON")  # ativa as chaves estrangeiras
-    # Função usada nas buscas para ignorar maiúsculas/minúsculas em português.
-    con.create_function("minusc", 1, lambda s: s.lower() if isinstance(s, str) else s)
-    return con
-
-
-def get_db():
-    """Uma conexão por requisição, reaproveitada dentro dela."""
-    if "db" not in g:
-        g.db = conectar()
-    return g.db
-
-
-@app.teardown_appcontext
-def fechar_db(_erro=None):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-
-def iniciar_banco():
-    """Cria as tabelas caso o arquivo do banco ainda não as tenha."""
-    con = conectar()
-    with open(SCHEMA_SQL, encoding="utf-8") as arquivo:
-        con.executescript(arquivo.read())
-    con.close()
-
-
-def _para_dict(linha, temas):
-    """Converte uma linha do banco no dicionário usado pelos templates."""
+def _filme_para_dict(linha, temas):
+    """Converte uma linha do banco no dicionário usado pelos templates e pela IA."""
     return {
         "id": linha["id"],
         "titulo": linha["titulo"],
@@ -102,7 +118,7 @@ def _temas_por_filme():
     return mapa
 
 
-def consultar_filmes(busca="", tema="", parte="", ordem="imdb"):
+def consultar_filmes(busca="", tema="", parte="", ordem="original"):
     """Lista filmes aplicando busca, filtro por tema/parágrafo e ordenação (SQL)."""
     condicoes, parametros = [], []
     if busca:
@@ -128,9 +144,11 @@ def consultar_filmes(busca="", tema="", parte="", ordem="imdb"):
         parametros.append(parte)
 
     ordenacoes = {
-        "ano": "f.ano DESC, f.titulo",
-        "titulo": "minusc(f.titulo)",
-        "imdb": "f.imdb DESC, f.titulo",
+        # f.rowid desempata mantendo a ordem de cadastro do catálogo
+        "ano": "f.ano DESC, f.rowid",
+        "titulo": "minusc(f.titulo), f.rowid",
+        "imdb": "f.imdb DESC, f.rowid",
+        "original": "f.rowid",  # ordem de cadastro do catálogo
     }
     sql = "SELECT f.* FROM filmes f"
     if condicoes:
@@ -139,7 +157,7 @@ def consultar_filmes(busca="", tema="", parte="", ordem="imdb"):
 
     linhas = get_db().execute(sql, parametros).fetchall()
     temas = _temas_por_filme()
-    return [_para_dict(l, temas.get(l["id"], [])) for l in linhas]
+    return [_filme_para_dict(l, temas.get(l["id"], [])) for l in linhas]
 
 
 def listar_filmes():
@@ -163,33 +181,26 @@ def buscar_filme(filme_id):
             (filme_id,),
         )
     ]
-    return _para_dict(linha, temas)
+    return _filme_para_dict(linha, temas)
 
 
 def filmes_relacionados(filme_id, limite=6):
     """Filmes que compartilham temas com o filme informado (JOIN + GROUP BY)."""
-    ids = [
-        l["id"]
-        for l in get_db().execute(
-            """
-            SELECT f.id
-            FROM filmes f
-            JOIN filme_temas ft ON ft.filme_id = f.id
-            WHERE f.id <> :id
-              AND ft.tema_id IN (SELECT tema_id FROM filme_temas WHERE filme_id = :id)
-            GROUP BY f.id
-            ORDER BY COUNT(*) DESC, f.imdb DESC
-            LIMIT :limite
-            """,
-            {"id": filme_id, "limite": limite},
-        )
-    ]
+    linhas = get_db().execute(
+        """
+        SELECT f.*
+        FROM filmes f
+        JOIN filme_temas ft ON ft.filme_id = f.id
+        WHERE f.id <> :id
+          AND ft.tema_id IN (SELECT tema_id FROM filme_temas WHERE filme_id = :id)
+        GROUP BY f.id
+        ORDER BY COUNT(*) DESC, f.imdb DESC
+        LIMIT :limite
+        """,
+        {"id": filme_id, "limite": limite},
+    ).fetchall()
     temas = _temas_por_filme()
-    resultado = []
-    for fid in ids:
-        linha = get_db().execute("SELECT * FROM filmes WHERE id = ?", (fid,)).fetchone()
-        resultado.append(_para_dict(linha, temas.get(fid, [])))
-    return resultado
+    return [_filme_para_dict(l, temas.get(l["id"], [])) for l in linhas]
 
 
 def temas_disponiveis():
@@ -204,92 +215,73 @@ def temas_disponiveis():
     return [l["nome"] for l in linhas]
 
 
-def ids_de_filmes():
-    return {l["id"] for l in get_db().execute("SELECT id FROM filmes")}
-
-
-def salvar_filme(filme, criar):
-    """INSERT (criar=True) ou UPDATE de um filme, regravando seus temas."""
-    db = get_db()
-    with db:  # transação: tudo ou nada
-        if criar:
-            db.execute(
-                """INSERT INTO filmes
-                   (id, titulo, ano, diretor, imdb, sinopse, como_usar, citacao, parte, cor, cartaz)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                (filme["id"], filme["titulo"], filme["ano"], filme["diretor"], filme["imdb"],
-                 filme["sinopse"], filme["comoUsar"], filme["citacao"], filme["parte"],
-                 filme["cor"], filme["cartaz"]),
-            )
-        else:
-            db.execute(
-                """UPDATE filmes
-                   SET titulo=?, ano=?, diretor=?, imdb=?, sinopse=?, como_usar=?,
-                       citacao=?, parte=?, cor=?, cartaz=?
-                   WHERE id=?""",
-                (filme["titulo"], filme["ano"], filme["diretor"], filme["imdb"],
-                 filme["sinopse"], filme["comoUsar"], filme["citacao"], filme["parte"],
-                 filme["cor"], filme["cartaz"], filme["id"]),
-            )
-            db.execute("DELETE FROM filme_temas WHERE filme_id = ?", (filme["id"],))
-        for nome in dict.fromkeys(filme["temas"]):  # remove repetidos mantendo a ordem
-            db.execute("INSERT OR IGNORE INTO temas (nome) VALUES (?)", (nome,))
-            db.execute(
-                """INSERT OR IGNORE INTO filme_temas (filme_id, tema_id)
-                   SELECT ?, id FROM temas WHERE nome = ?""",
-                (filme["id"], nome),
-            )
-        _limpar_temas_orfaos(db)
-
-
-def excluir_filme(filme_id):
-    """DELETE do filme; filme_temas e anotacoes saem juntos (ON DELETE CASCADE)."""
-    db = get_db()
-    with db:
-        apagados = db.execute("DELETE FROM filmes WHERE id = ?", (filme_id,)).rowcount
-        _limpar_temas_orfaos(db)
-    return apagados > 0
-
-
-def _limpar_temas_orfaos(db):
-    db.execute("DELETE FROM temas WHERE id NOT IN (SELECT tema_id FROM filme_temas)")
-
-
-def listar_anotacoes(filme_id=None):
+# --------------------------------------------------------------------------
+# Camada de persistência (SQLite) — anotações do usuário (CRUD)
+# --------------------------------------------------------------------------
+def listar_anotacoes(usuario_id=None, filme_id=None):
     """Anotações com o título do filme (JOIN), da mais antiga para a mais recente."""
     sql = """
-        SELECT a.id, a.filme_id, a.parte, a.texto, a.criado_em, f.titulo AS filme_titulo
+        SELECT a.id, a.usuario_id, a.filme_id, a.parte, a.texto, a.criado_em,
+               f.titulo AS filme_titulo
         FROM anotacoes a
         JOIN filmes f ON f.id = a.filme_id
     """
-    parametros = ()
+    condicoes, parametros = [], []
+    if usuario_id:
+        condicoes.append("a.usuario_id = ?")
+        parametros.append(usuario_id)
     if filme_id:
-        sql += " WHERE a.filme_id = ?"
-        parametros = (filme_id,)
+        condicoes.append("a.filme_id = ?")
+        parametros.append(filme_id)
+    if condicoes:
+        sql += " WHERE " + " AND ".join(condicoes)
     sql += " ORDER BY a.rowid"
     return [dict(l) for l in get_db().execute(sql, parametros)]
 
 
-def criar_anotacao(filme_id, parte, texto):
+def anotacoes_do_usuario():
+    usuario = session.get("usuario")
+    if not usuario:
+        return []
+    return listar_anotacoes(usuario_id=usuario["id"])
+
+
+def criar_anotacao(usuario_id, filme_id, parte, texto):
+    """INSERT de uma anotação do usuário."""
     existentes = {l["id"] for l in get_db().execute("SELECT id FROM anotacoes")}
     with get_db() as db:
         db.execute(
-            "INSERT INTO anotacoes (id, filme_id, parte, texto, criado_em) VALUES (?,?,?,?,?)",
-            (gerar_id(texto[:30], existentes), filme_id, parte, texto,
+            """INSERT INTO anotacoes (id, usuario_id, filme_id, parte, texto, criado_em)
+               VALUES (?,?,?,?,?,?)""",
+            (gerar_id(texto[:30], existentes), usuario_id, filme_id, parte, texto,
              datetime.now().strftime("%d/%m/%Y %H:%M")),
         )
 
 
-def excluir_anotacao(anotacao_id):
+def atualizar_anotacao(anotacao_id, usuario_id, texto, parte):
+    """UPDATE da anotação (só se ela pertencer ao usuário). Devolve True se alterou."""
+    atual = get_db().execute(
+        "SELECT parte FROM anotacoes WHERE id = ? AND usuario_id = ?",
+        (anotacao_id, usuario_id),
+    ).fetchone()
+    if atual is None:
+        return False
+    nova_parte = parte if parte in PARTES else atual["parte"]
     with get_db() as db:
-        db.execute("DELETE FROM anotacoes WHERE id = ?", (anotacao_id,))
+        db.execute(
+            "UPDATE anotacoes SET texto = ?, parte = ?, criado_em = ? WHERE id = ? AND usuario_id = ?",
+            (texto, nova_parte, datetime.now().strftime("%d/%m/%Y %H:%M"), anotacao_id, usuario_id),
+        )
+    return True
 
 
-def contar(tabela):
-    tabelas_validas = {"filmes", "temas", "anotacoes"}
-    if tabela not in tabelas_validas:
-        raise ValueError("Tabela inválida")
-    return get_db().execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0]
+def excluir_anotacao(anotacao_id, usuario_id):
+    """DELETE da anotação (só se ela pertencer ao usuário)."""
+    with get_db() as db:
+        db.execute(
+            "DELETE FROM anotacoes WHERE id = ? AND usuario_id = ?",
+            (anotacao_id, usuario_id),
+        )
 
 
 def gerar_id(texto, existentes):
@@ -302,6 +294,21 @@ def gerar_id(texto, existentes):
         candidato = f"{slug}-{contador}"
         contador += 1
     return candidato
+
+
+def selecao_do_dia(filmes, quantidade=12):
+    """Catálogo que se renova sozinho: a vitrine muda a cada dia.
+
+    Usa a data como semente do sorteio, então todos os visitantes veem a
+    mesma seleção no mesmo dia e uma seleção diferente no dia seguinte —
+    sem ninguém precisar editar o catálogo.
+    """
+    if not filmes:
+        return []
+    sorteio = random.Random(date.today().toordinal())
+    copia = list(filmes)
+    sorteio.shuffle(copia)
+    return copia[:quantidade]
 
 
 # --------------------------------------------------------------------------
@@ -329,6 +336,10 @@ def injetar_globais():
         "imdb_url": imdb_url,
         "rotulo_parte": ROTULO_PARTE,
         "ano_atual": datetime.now().year,
+        "usuario": session.get("usuario"),
+        "perguntas_ia": ia.PERGUNTAS_SUGERIDAS[:4],
+        "briggs_api_ativa": ia.api_ativa(),
+        "atualizado_em": date.today().strftime("%d/%m/%Y"),
     }
 
 
@@ -342,15 +353,30 @@ def filtro_cartaz(valor):
     return url_for("static", filename=f"img/{valor}")
 
 
+def login_obrigatorio(view):
+    """Protege as rotas que dependem de uma conta ativa."""
+
+    @wraps(view)
+    def envolvida(*args, **kwargs):
+        if not session.get("usuario"):
+            flash("Entre na sua conta para acessar esta página.", "danger")
+            return redirect(url_for("entrar", proxima=request.path))
+        return view(*args, **kwargs)
+
+    return envolvida
+
+
 # --------------------------------------------------------------------------
 # Rota 1 — Página inicial (GET)
 # --------------------------------------------------------------------------
 @app.route("/")
 def index():
     filmes = listar_filmes()
-    destaques = sorted(filmes, key=lambda f: f.get("imdb") or 0, reverse=True)[:12]
-    esteira_a = filmes[: len(filmes) // 2]
-    esteira_b = filmes[len(filmes) // 2 :]
+    # Vitrine da home: só filmes que já têm cartaz (os demais aparecem no catálogo).
+    vitrine = [f for f in filmes if f["cartaz"]] or filmes
+    destaques = selecao_do_dia(vitrine, 10)
+    esteira_a = vitrine[: len(vitrine) // 2]
+    esteira_b = vitrine[len(vitrine) // 2 :]
     return render_template(
         "index.html",
         titulo_pagina="Início",
@@ -393,100 +419,117 @@ def filme_detalhe(filme_id):
     filme = buscar_filme(filme_id)
     if filme is None:
         return render_template("404.html", titulo_pagina="Não encontrado"), 404
+    anotacoes = [a for a in anotacoes_do_usuario() if a["filme_id"] == filme_id]
     return render_template(
         "detalhe.html",
         titulo_pagina=filme["titulo"],
         filme=filme,
         relacionados=filmes_relacionados(filme_id),
-        anotacoes=listar_anotacoes(filme_id),
+        anotacoes=anotacoes,
     )
 
 
 # --------------------------------------------------------------------------
-# Rota 4 — Cadastrar novo filme (GET + POST) — CREATE
+# Rota 4 — Criar conta (GET + POST) — CREATE de usuário
 # --------------------------------------------------------------------------
-@app.route("/filmes/novo", methods=["GET", "POST"])
-def filme_novo():
+@app.route("/conta/criar", methods=["GET", "POST"])
+def criar_conta():
     if request.method == "POST":
-        erros = validar_filme(request.form)
+        erros = contas.validar_cadastro(request.form)
         if erros:
             for erro in erros:
                 flash(erro, "danger")
             return render_template(
-                "form_filme.html",
-                titulo_pagina="Novo filme",
-                filme=request.form,
-                partes=PARTES,
-                modo="novo",
+                "criar_conta.html", titulo_pagina="Criar conta", form=request.form
             )
-
-        novo = montar_filme(request.form, gerar_id(request.form["titulo"], ids_de_filmes()))
-        salvar_filme(novo, criar=True)
-        flash(f"Filme “{novo['titulo']}” cadastrado com sucesso.", "success")
-        return redirect(url_for("filme_detalhe", filme_id=novo["id"]))
-
-    return render_template(
-        "form_filme.html", titulo_pagina="Novo filme", filme={}, partes=PARTES, modo="novo"
-    )
-
-
-# --------------------------------------------------------------------------
-# Rota 5 — Editar filme (GET + POST) — UPDATE
-# --------------------------------------------------------------------------
-@app.route("/filmes/<filme_id>/editar", methods=["GET", "POST"])
-def filme_editar(filme_id):
-    atual = buscar_filme(filme_id)
-    if atual is None:
-        return render_template("404.html", titulo_pagina="Não encontrado"), 404
-
-    if request.method == "POST":
-        erros = validar_filme(request.form)
-        if erros:
-            for erro in erros:
-                flash(erro, "danger")
+        usuario = contas.criar_usuario(request.form)
+        if usuario["a2f"]:
+            codigo = contas.gerar_codigo(usuario["email"])
+            session["a2f_email"] = usuario["email"]
+            session["a2f_proxima"] = url_for("index")
+            flash("Conta criada. Enviamos um código de verificação para o seu e-mail.", "success")
             return render_template(
-                "form_filme.html",
-                titulo_pagina="Editar filme",
-                filme=request.form,
-                partes=PARTES,
-                modo="editar",
-                filme_id=filme_id,
+                "verificar.html",
+                titulo_pagina="Verificação em duas etapas",
+                email=usuario["email"],
+                codigo_demo=codigo,
             )
-        atualizado = montar_filme(request.form, filme_id)
-        atualizado["cartaz"] = request.form.get("cartaz") or atual.get("cartaz", "")
-        atualizado["cor"] = atual.get("cor", COR_PADRAO)
-        salvar_filme(atualizado, criar=False)
-        flash("Filme atualizado com sucesso.", "success")
-        return redirect(url_for("filme_detalhe", filme_id=filme_id))
+        session["usuario"] = contas.dados_publicos(usuario)
+        flash(f"Bem-vindo(a), {usuario['nome']}! Conta criada com sucesso.", "success")
+        return redirect(url_for("index"))
 
-    filme = dict(atual)
-    filme["temas_texto"] = ", ".join(filme.get("temas", []))
-    return render_template(
-        "form_filme.html",
-        titulo_pagina="Editar filme",
-        filme=filme,
-        partes=PARTES,
-        modo="editar",
-        filme_id=filme_id,
-    )
+    return render_template("criar_conta.html", titulo_pagina="Criar conta", form={})
 
 
 # --------------------------------------------------------------------------
-# Rota 6 — Excluir filme (POST) — DELETE
+# Rota 5 — Entrar / trocar de conta (GET + POST)
 # --------------------------------------------------------------------------
-@app.route("/filmes/<filme_id>/excluir", methods=["POST"])
-def filme_excluir(filme_id):
-    if excluir_filme(filme_id):
-        flash("Filme excluído do catálogo.", "success")
-    else:
-        flash("Filme não encontrado.", "danger")
-    return redirect(url_for("filmes_lista"))
+@app.route("/conta/entrar", methods=["GET", "POST"])
+def entrar():
+    proxima = request.values.get("proxima") or url_for("index")
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        senha = request.form.get("senha") or ""
+        usuario = contas.buscar_por_email(email)
+        if not usuario or not contas.senha_confere(usuario, senha):
+            flash("E-mail ou senha incorretos.", "danger")
+            return render_template("entrar.html", titulo_pagina="Entrar", email=email, proxima=proxima)
+
+        if usuario["a2f"]:
+            codigo = contas.gerar_codigo(usuario["email"])
+            session["a2f_email"] = usuario["email"]
+            session["a2f_proxima"] = proxima
+            return render_template(
+                "verificar.html",
+                titulo_pagina="Verificação em duas etapas",
+                email=usuario["email"],
+                codigo_demo=codigo,
+            )
+
+        session["usuario"] = contas.dados_publicos(usuario)
+        flash(f"Olá de novo, {usuario['nome']}!", "success")
+        return redirect(proxima)
+
+    return render_template("entrar.html", titulo_pagina="Entrar", email="", proxima=proxima)
+
+
+# --------------------------------------------------------------------------
+# Rota 6 — Verificar código de dois fatores (POST) e sair (GET)
+# --------------------------------------------------------------------------
+@app.route("/conta/verificar", methods=["POST"])
+def verificar_codigo():
+    email = session.get("a2f_email")
+    if not email:
+        flash("Sessão de verificação expirada. Entre novamente.", "danger")
+        return redirect(url_for("entrar"))
+
+    ok, mensagem = contas.validar_codigo(email, request.form.get("codigo"))
+    if not ok:
+        flash(mensagem, "danger")
+        return render_template(
+            "verificar.html", titulo_pagina="Verificação em duas etapas", email=email, codigo_demo=""
+        )
+
+    usuario = contas.buscar_por_email(email)
+    session["usuario"] = contas.dados_publicos(usuario)
+    proxima = session.pop("a2f_proxima", url_for("index"))
+    session.pop("a2f_email", None)
+    flash("Verificação concluída. Sua conta está protegida com dois fatores.", "success")
+    return redirect(proxima)
+
+
+@app.route("/conta/sair")
+def sair():
+    session.pop("usuario", None)
+    flash("Você saiu da conta.", "success")
+    return redirect(url_for("index"))
 
 
 # --------------------------------------------------------------------------
 # Rota 7 — Anotações de repertório: listar e criar (GET + POST)
 # --------------------------------------------------------------------------
 @app.route("/anotacoes", methods=["GET", "POST"])
+@login_obrigatorio
 def anotacoes():
     filmes = listar_filmes()
     if request.method == "POST":
@@ -504,55 +547,173 @@ def anotacoes():
             for erro in erros:
                 flash(erro, "danger")
         else:
-            criar_anotacao(filme_id, parte, texto)
+            criar_anotacao(session["usuario"]["id"], filme_id, parte, texto)
             flash("Anotação de repertório salva.", "success")
             return redirect(url_for("anotacoes"))
 
-    titulos = {f["id"]: f["titulo"] for f in filmes}
     return render_template(
         "anotacoes.html",
         titulo_pagina="Minhas anotações",
-        anotacoes=listar_anotacoes(),
+        anotacoes=anotacoes_do_usuario(),
         filmes=sorted(filmes, key=lambda f: f["titulo"].lower()),
-        titulos=titulos,
+        titulos={f["id"]: f["titulo"] for f in filmes},
         partes=PARTES,
     )
 
 
 # --------------------------------------------------------------------------
-# Rota 8 — Excluir anotação (POST)
+# Rota 8 — Editar anotação (POST) — UPDATE
+# --------------------------------------------------------------------------
+@app.route("/anotacoes/<anotacao_id>/editar", methods=["POST"])
+@login_obrigatorio
+def anotacao_editar(anotacao_id):
+    texto = (request.form.get("texto") or "").strip()
+    parte = request.form.get("parte", "introducao")
+    if len(texto) < 15:
+        flash("A anotação deve ter pelo menos 15 caracteres.", "danger")
+    elif atualizar_anotacao(anotacao_id, session["usuario"]["id"], texto, parte):
+        flash("Anotação atualizada.", "success")
+    else:
+        flash("Anotação não encontrada.", "danger")
+    return redirect(url_for("anotacoes"))
+
+
+# --------------------------------------------------------------------------
+# Rota 9 — Excluir anotação (POST) — DELETE
 # --------------------------------------------------------------------------
 @app.route("/anotacoes/<anotacao_id>/excluir", methods=["POST"])
+@login_obrigatorio
 def anotacao_excluir(anotacao_id):
-    excluir_anotacao(anotacao_id)
+    excluir_anotacao(anotacao_id, session["usuario"]["id"])
     flash("Anotação excluída.", "success")
     return redirect(url_for("anotacoes"))
 
 
 # --------------------------------------------------------------------------
-# Rota 9 — Estrutura da redação (GET)
+# Contato e notificações por e-mail
 # --------------------------------------------------------------------------
-@app.route("/estrutura")
-def estrutura():
-    por_parte = {parte: consultar_filmes(parte=parte, ordem="imdb")[:4] for parte in PARTES}
-    return render_template("estrutura.html", titulo_pagina="Estrutura da redação", por_parte=por_parte)
+EMAIL_DESTINO_CONTATO = "cinerepertorio@gmail.com"
+
+
+def enviar_email_contato(nome, email_resposta, assunto, mensagem):
+    """Envia uma mensagem de contato usando SMTP configurado no ambiente.
+
+    Para Gmail: smtp.gmail.com + porta 587 (STARTTLS) ou 465 (SSL).
+    SMTP_PASSWORD deve ser uma senha de app do provedor, nunca a senha
+    normal da conta. As credenciais ficam fora do código-fonte.
+    """
+    host = (os.environ.get("SMTP_HOST") or "").strip()
+    usuario_smtp = (os.environ.get("SMTP_USER") or "").strip()
+    senha_smtp = (os.environ.get("SMTP_PASSWORD") or "").strip()
+    remetente = (os.environ.get("SMTP_FROM") or usuario_smtp).strip()
+    if not all([host, usuario_smtp, senha_smtp, remetente]):
+        raise RuntimeError("Configuração SMTP incompleta.")
+
+    porta = int(os.environ.get("SMTP_PORT", "587"))
+    timeout = int(os.environ.get("SMTP_TIMEOUT", "20"))
+    usa_ssl = os.environ.get("SMTP_USE_SSL", "").strip().lower() in {"1", "true", "yes", "sim"} or porta == 465
+
+    # Evita caracteres de quebra de linha nos cabeçalhos do e-mail.
+    assunto_seguro = " ".join(assunto.replace("\r", " ").replace("\n", " ").split())
+    nome_seguro = " ".join(nome.replace("\r", " ").replace("\n", " ").split())
+
+    email_msg = EmailMessage()
+    email_msg["Subject"] = f"CineRepertório | {assunto_seguro}"
+    email_msg["From"] = remetente
+    email_msg["To"] = EMAIL_DESTINO_CONTATO
+    email_msg["Reply-To"] = email_resposta
+    email_msg.set_content(
+        "Mensagem enviada pelo CineRepertório\n\n"
+        f"Nome: {nome_seguro}\n"
+        f"E-mail para resposta: {email_resposta}\n"
+        f"Assunto: {assunto_seguro}\n\n"
+        f"{mensagem}"
+    )
+
+    contexto_tls = ssl.create_default_context()
+    if usa_ssl:
+        with smtplib.SMTP_SSL(host, porta, timeout=timeout, context=contexto_tls) as servidor:
+            servidor.login(usuario_smtp, senha_smtp)
+            servidor.send_message(email_msg)
+    else:
+        with smtplib.SMTP(host, porta, timeout=timeout) as servidor:
+            servidor.ehlo()
+            servidor.starttls(context=contexto_tls)
+            servidor.ehlo()
+            servidor.login(usuario_smtp, senha_smtp)
+            servidor.send_message(email_msg)
+
+
+@app.route("/notificacoes", methods=["GET", "POST"])
+def notificacoes():
+    if request.method == "POST":
+        nome = (request.form.get("nome") or "").strip()[:100]
+        email = (request.form.get("email") or "").strip()[:160]
+        assunto = (request.form.get("assunto") or "").strip()[:140]
+        mensagem = (request.form.get("mensagem") or "").strip()[:4000]
+        # Campo-armadilha simples para reduzir envios automatizados.
+        if request.form.get("website"):
+            flash("Não foi possível enviar a mensagem.", "danger")
+            return redirect(url_for("notificacoes"))
+        if (not nome or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
+                or not assunto or len(mensagem) < 10):
+            flash("Confira os campos. A mensagem precisa ter pelo menos 10 caracteres.", "danger")
+            return redirect(url_for("notificacoes"))
+        if not all((os.environ.get("SMTP_HOST"), os.environ.get("SMTP_USER"), os.environ.get("SMTP_PASSWORD"))):
+            flash("O formulário está pronto, mas o envio ainda precisa ser ativado pelo administrador com as configurações SMTP do projeto.", "warning")
+            return redirect(url_for("notificacoes"))
+        try:
+            enviar_email_contato(nome, email, assunto, mensagem)
+            flash("Mensagem enviada! A equipe do CineRepertório recebeu seu contato.", "success")
+        except (OSError, ValueError, RuntimeError, smtplib.SMTPException):
+            app.logger.exception("Falha ao enviar mensagem de contato")
+            flash("Não foi possível enviar agora. Confira a configuração SMTP ou tente novamente mais tarde.", "danger")
+        return redirect(url_for("notificacoes"))
+    return render_template("notificacoes.html", titulo_pagina="Notificações")
 
 
 # --------------------------------------------------------------------------
-# Rota 10 — Sobre o projeto (GET)
+# Rota 10 — Assistente de redação (IA) — página e API (GET + POST)
 # --------------------------------------------------------------------------
-@app.route("/sobre")
-def sobre():
+@app.route("/assistente")
+def assistente():
     return render_template(
-        "sobre.html",
-        titulo_pagina="Sobre",
-        total=contar("filmes"),
-        total_anotacoes=contar("anotacoes"),
+        "assistente.html",
+        titulo_pagina="Converse com Briggs",
+        sugestoes=ia.PERGUNTAS_SUGERIDAS,
     )
 
 
+_briggs_requisicoes = {}
+
+
+@app.route("/api/assistente", methods=["POST"])
+def api_assistente():
+    """Chat geral do Briggs com histórico limitado e controle básico de frequência."""
+    agora = time.monotonic()
+    ip = request.remote_addr or "desconhecido"
+    recentes = [t for t in _briggs_requisicoes.get(ip, []) if agora - t < 60]
+    if len(recentes) >= 18:
+        return jsonify({"texto": "Você enviou muitas mensagens em pouco tempo. Aguarde um minuto e tente novamente."}), 429
+    recentes.append(agora)
+    _briggs_requisicoes[ip] = recentes
+
+    dados = request.get_json(silent=True) or {}
+    mensagem = dados.get("mensagem", "")
+    if not isinstance(mensagem, str) or not mensagem.strip():
+        return jsonify({"texto": "Escreva uma mensagem para o Briggs."}), 400
+    if len(mensagem) > 5000:
+        return jsonify({"texto": "A mensagem ultrapassou o limite de 5.000 caracteres. Envie em partes menores."}), 400
+    historico = dados.get("historico", [])
+    if not isinstance(historico, list):
+        historico = []
+    resposta = ia.conversar(mensagem, historico, listar_filmes())
+    codigo = 200 if resposta.get("modo") != "erro" else 502
+    return jsonify(resposta), codigo
+
+
 # --------------------------------------------------------------------------
-# Rotas 11 e 12 — API simples em JSON (GET)
+# Rotas 11 e 12 — API simples em JSON do catálogo (GET)
 # --------------------------------------------------------------------------
 @app.route("/api/filmes")
 def api_filmes():
@@ -568,61 +729,44 @@ def api_filmes():
 
 @app.route("/api/filmes/<filme_id>")
 def api_filme(filme_id):
-    """Um filme em JSON, com temas e anotações."""
+    """Um filme em JSON, com seus temas."""
     filme = buscar_filme(filme_id)
     if filme is None:
         return jsonify({"erro": "Filme não encontrado"}), 404
-    filme["anotacoes"] = listar_anotacoes(filme_id)
     return jsonify(filme)
 
 
 # --------------------------------------------------------------------------
-# Validação e montagem de dados
+# Rota 13 — Estrutura da redação (GET)
 # --------------------------------------------------------------------------
-def validar_filme(form):
-    erros = []
-    if len((form.get("titulo") or "").strip()) < 2:
-        erros.append("Informe o título do filme.")
-    if len((form.get("diretor") or "").strip()) < 2:
-        erros.append("Informe o nome da direção.")
-    try:
-        ano = int(form.get("ano") or 0)
-        if ano < 1895 or ano > datetime.now().year + 1:
-            erros.append("Informe um ano de lançamento válido.")
-    except ValueError:
-        erros.append("O ano deve ser um número.")
-    try:
-        nota = float((form.get("imdb") or "0").replace(",", "."))
-        if nota < 0 or nota > 10:
-            erros.append("A nota do IMDb deve estar entre 0 e 10.")
-    except ValueError:
-        erros.append("A nota do IMDb deve ser um número.")
-    if not (form.get("temas") or "").strip():
-        erros.append("Informe pelo menos um tema.")
-    if len((form.get("sinopse") or "").strip()) < 20:
-        erros.append("A sinopse deve ter pelo menos 20 caracteres.")
-    if len((form.get("citacao") or "").strip()) < 20:
-        erros.append("Escreva a citação pronta para a redação (mínimo 20 caracteres).")
-    if (form.get("parte") or "") not in PARTES:
-        erros.append("Selecione o parágrafo em que o filme se encaixa.")
-    return erros
+@app.route("/estrutura")
+def estrutura():
+    por_parte = {parte: consultar_filmes(parte=parte, ordem="imdb")[:4] for parte in PARTES}
+    return render_template("estrutura.html", titulo_pagina="Estrutura da redação", por_parte=por_parte)
 
 
-def montar_filme(form, filme_id):
-    return {
-        "id": filme_id,
-        "titulo": form["titulo"].strip(),
-        "ano": int(form["ano"]),
-        "diretor": form["diretor"].strip(),
-        "imdb": round(float(form["imdb"].replace(",", ".")), 1),
-        "temas": [t.strip() for t in form["temas"].split(",") if t.strip()],
-        "sinopse": form["sinopse"].strip(),
-        "comoUsar": (form.get("comoUsar") or "").strip(),
-        "citacao": form["citacao"].strip(),
-        "parte": form["parte"],
-        "cor": COR_PADRAO,
-        "cartaz": (form.get("cartaz") or "").strip(),
-    }
+
+
+# --------------------------------------------------------------------------
+# Rota 14 — Acessibilidade (GET)
+# --------------------------------------------------------------------------
+@app.route("/acessibilidade")
+def acessibilidade():
+    return render_template("acessibilidade.html", titulo_pagina="Acessibilidade")
+
+
+# --------------------------------------------------------------------------
+# Rota 15 — Sobre o projeto (GET)
+# --------------------------------------------------------------------------
+@app.route("/sobre")
+def sobre():
+    return render_template(
+        "sobre.html",
+        titulo_pagina="Sobre",
+        total=contar("filmes"),
+        total_anotacoes=contar("anotacoes"),
+        total_usuarios=contar("usuarios"),
+    )
 
 
 @app.errorhandler(404)
@@ -631,7 +775,7 @@ def pagina_nao_encontrada(_erro):
 
 
 # Garante as tabelas ao iniciar (inclusive sob o gunicorn, no Render).
-iniciar_banco()
+banco.iniciar_banco()
 
 
 if __name__ == "__main__":

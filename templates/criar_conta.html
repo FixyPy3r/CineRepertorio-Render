@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <h1 class="h3">Criar <span class="brilho">conta</span></h1>
+      <p class="texto-suave">Sua senha é guardada apenas em formato criptografado (PBKDF2-SHA256 com salt). Nunca guardamos a senha original.</p>
+
+      <form class="painel p-4" method="post" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="nome">Nome</label>
+            <input class="form-control" id="nome" name="nome" required autocomplete="given-name"
+                   value="{{ form.nome or '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="sobrenome">Sobrenome</label>
+            <input class="form-control" id="sobrenome" name="sobrenome" required autocomplete="family-name"
+                   value="{{ form.sobrenome or '' }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="email">E-mail</label>
+            <input class="form-control" type="email" id="email" name="email" required autocomplete="email"
+                   value="{{ form.email or '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="senha">Senha</label>
+            <input class="form-control" type="password" id="senha" name="senha" required
+                   autocomplete="new-password" aria-describedby="ajuda-senha">
+            <div class="form-text" id="ajuda-senha">Mínimo de 8 caracteres, com letras e números.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="confirmar">Confirmar senha</label>
+            <input class="form-control" type="password" id="confirmar" name="confirmar" required
+                   autocomplete="new-password">
+          </div>
+        </div>
+
+        <fieldset class="mt-4">
+          <legend class="h6 brilho">Como você quer proteger a sua conta?</legend>
+          <div class="form-check painel-suave p-3 mb-2">
+            <input class="form-check-input" type="radio" name="protecao" id="p-a2f" value="a2f" checked>
+            <label class="form-check-label" for="p-a2f">
+              <strong>Com A2F (recomendado)</strong><br>
+              <span class="texto-suave small">A cada login enviamos um código de 6 dígitos para o seu e-mail. Mesmo que alguém descubra sua senha, não entra sem o código.</span>
+            </label>
+          </div>
+          <div class="form-check painel-suave p-3">
+            <input class="form-check-input" type="radio" name="protecao" id="p-simples" value="simples">
+            <label class="form-check-label" for="p-simples">
+              <strong>Sem A2F</strong><br>
+              <span class="texto-suave small">Entrada apenas com nome, sobrenome, e-mail e senha.</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <button class="btn btn-dourado mt-4" type="submit">Criar minha conta</button>
+        <a class="btn btn-contorno mt-4" href="{{ url_for('entrar') }}">Já tenho conta</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

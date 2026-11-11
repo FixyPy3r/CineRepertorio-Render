@@ -1,4 +1,11 @@
-"""Testes automatizados das rotas do CineRepertório (UC35) — usam uma cópia temporária do banco."""
+"""
+Testes automatizados do CineRepertório. Execute: python testes.py
+
+Durante os testes é usada uma cópia temporária do banco de dados, para não alterar o original.
+"""
+
+
+
 import os
 import shutil
 import sqlite3
@@ -9,13 +16,14 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 TMP = tempfile.mkdtemp()
 COPIA = os.path.join(TMP, "banco_teste.db")
 shutil.copy(os.path.join(BASE, "banco.db"), COPIA)
-os.environ["DATABASE"] = COPIA  # o app usa a cópia, o banco real fica intacto
+os.environ["DATABASE"] = COPIA  # o app usa a cópia
 
 sys.path.insert(0, BASE)
 import app as aplicacao  # noqa: E402
+import contas  # noqa: E402
 
 cliente = aplicacao.app.test_client()
-falhas = []
+falhas = 0
 
 
 def consultar(sql, params=()):
@@ -26,105 +34,127 @@ def consultar(sql, params=()):
         con.close()
 
 
-def checar(rotulo, condicao):
-    print(("  OK  " if condicao else " FALHA ") + rotulo)
+def checar(descricao, condicao):
+    global falhas
+    print(("  OK  " if condicao else " FALHA ") + descricao)
     if not condicao:
-        falhas.append(rotulo)
+        falhas += 1
 
 
-print("\n== GET ==")
-for rota in ["/", "/filmes", "/filmes?tema=Educa%C3%A7%C3%A3o&ordem=ano",
-             "/filmes?busca=educa%C3%A7%C3%A3o", "/filmes?parte=conclusao",
-             "/filmes/parasita", "/filmes/novo", "/filmes/parasita/editar",
-             "/anotacoes", "/estrutura", "/sobre"]:
-    r = cliente.get(rota)
-    checar(f"GET {rota} -> {r.status_code}", r.status_code == 200)
+print("== ARMAZENAMENTO ==")
+checar("projeto não usa mais arquivos JSON de dados", not os.path.exists(os.path.join(BASE, "data")))
+checar("banco tem 112 filmes", consultar("SELECT COUNT(*) FROM filmes")[0][0] == 112)
+checar("todo filme tem 2 a 3 temas", consultar("SELECT COUNT(*) FROM filmes f WHERE (SELECT COUNT(*) FROM filme_temas t WHERE t.filme_id=f.id) < 2")[0][0] == 0)
+checar("todo filme do catálogo tem cartaz", consultar("SELECT COUNT(*) FROM filmes WHERE cartaz IS NULL OR cartaz=''")[0][0] == 0)
+checar("chaves estrangeiras íntegras", consultar("PRAGMA foreign_key_check") == [])
+
+print("\n== ROTAS PÚBLICAS ==")
+for rota in ["/", "/filmes", "/filmes/ainda-estou-aqui", "/filmes/zootopia", "/filmes/marte-um", "/filmes?tema=Educa%C3%A7%C3%A3o&ordem=ano", "/filmes?busca=EDUCA%C3%87%C3%83O",
+             "/filmes/parasita", "/estrutura", "/assistente", "/acessibilidade", "/sobre",
+             "/conta/criar", "/conta/entrar", "/notificacoes"]:
+    checar(f"GET {rota} -> 200", cliente.get(rota).status_code == 200)
 checar("GET /filmes/inexistente -> 404", cliente.get("/filmes/inexistente").status_code == 404)
-
-print("\n== BUSCA / FILTROS (SQL) ==")
-checar("filtro por tema Educação retorna só filmes com esse tema",
-       all("Educação" in f["temas"] for f in aplicacao.app.test_client().get("/api/filmes?tema=Educa%C3%A7%C3%A3o").get_json()["filmes"]))
-checar("busca ignora maiúsculas e acentos de caixa (EDUCAÇÃO)",
-       cliente.get("/api/filmes?busca=EDUCA%C3%87%C3%83O").get_json()["total"] > 0)
-checar("ordem por ano é decrescente", (lambda l: l == sorted(l, reverse=True))(
-    [f["ano"] for f in cliente.get("/api/filmes?ordem=ano").get_json()["filmes"]]))
 
 print("\n== API JSON ==")
 r = cliente.get("/api/filmes")
 dados = r.get_json()
-checar("GET /api/filmes devolve JSON com 52 filmes", r.is_json and dados["total"] == 52)
-checar("cada filme traz lista de temas", all(isinstance(f["temas"], list) and f["temas"] for f in dados["filmes"]))
-r = cliente.get("/api/filmes/parasita")
-checar("GET /api/filmes/parasita devolve o filme", r.status_code == 200 and r.get_json()["titulo"] == "Parasita")
+checar("GET /api/filmes devolve JSON com 112 filmes", r.is_json and dados["total"] == 112)
+checar("cada filme traz a lista de temas", all(f["temas"] for f in dados["filmes"]))
+checar("filtro ?tema= na API", all("Educação" in f["temas"]
+       for f in cliente.get("/api/filmes?tema=Educa%C3%A7%C3%A3o").get_json()["filmes"]))
+checar("GET /api/filmes/parasita", cliente.get("/api/filmes/parasita").get_json()["titulo"] == "Parasita")
 checar("GET /api/filmes/xxx -> 404 em JSON", cliente.get("/api/filmes/xxx").status_code == 404)
 
-print("\n== CREATE ==")
-cliente.post("/filmes/novo", data={
-    "titulo": "Filme de Teste UC35", "ano": "2024", "diretor": "Equipe de Testes",
-    "imdb": "8.2", "temas": "Educação, Tecnologia, Tema Inédito",
-    "sinopse": "Filme criado automaticamente para validar o cadastro do sistema.",
-    "comoUsar": "Usado apenas em teste automatizado.",
-    "citacao": "Filme de Teste UC35 (2024) comprova que o cadastro funciona corretamente.",
-    "parte": "desenvolvimento", "cartaz": "",
-}, follow_redirects=True)
-checar("POST /filmes/novo cria registro no banco",
-       consultar("SELECT COUNT(*) FROM filmes WHERE id='filme-de-teste-uc35'")[0][0] == 1)
-checar("temas gravados na tabela de relação (3 vínculos)",
-       consultar("SELECT COUNT(*) FROM filme_temas WHERE filme_id='filme-de-teste-uc35'")[0][0] == 3)
-checar("tema novo criado na tabela temas",
-       consultar("SELECT COUNT(*) FROM temas WHERE nome='Tema Inédito'")[0][0] == 1)
+print("\n== PROTEÇÃO DE ROTA ==")
+checar("/anotacoes exige login", cliente.get("/anotacoes").status_code == 302)
 
-print("\n== VALIDAÇÃO ==")
-antes = consultar("SELECT COUNT(*) FROM filmes")[0][0]
-cliente.post("/filmes/novo", data={"titulo": "", "ano": "abc", "diretor": "", "imdb": "99",
-                                   "temas": "", "sinopse": "curta", "citacao": "curta", "parte": "x"})
-checar("POST inválido é rejeitado", antes == consultar("SELECT COUNT(*) FROM filmes")[0][0])
+print("\n== CONTA SEM A2F ==")
+resposta = cliente.post("/conta/criar", data=dict(
+    nome="Teste", sobrenome="UC35", email="teste.uc35@exemplo.com",
+    senha="senha1234", confirmar="senha1234", protecao="simples"), follow_redirects=True)
+checar("cadastro simples cria sessão", resposta.status_code == 200)
+linha = consultar("SELECT senha_hash, salt, a2f FROM usuarios WHERE email='teste.uc35@exemplo.com'")
+checar("usuário gravado na tabela usuarios", len(linha) == 1 and linha[0][2] == 0)
+checar("senha guardada só como hash (nunca em texto)", linha and "senha1234" not in linha[0][0] and len(linha[0][0]) == 64)
+checar("e-mail repetido é rejeitado", "Já existe uma conta" in cliente.post("/conta/criar", data=dict(
+    nome="Outro", sobrenome="Nome", email="teste.uc35@exemplo.com", senha="senha1234",
+    confirmar="senha1234", protecao="simples")).get_data(as_text=True))
+checar("/anotacoes acessível logado", cliente.get("/anotacoes").status_code == 200)
 
-print("\n== UPDATE ==")
-cliente.post("/filmes/filme-de-teste-uc35/editar", data={
-    "titulo": "Filme de Teste UC35", "ano": "2025", "diretor": "Equipe de Testes",
-    "imdb": "9.0", "temas": "Educação", "sinopse": "Sinopse atualizada pelo teste automatizado.",
-    "comoUsar": "", "citacao": "Citação atualizada pelo teste automatizado do sistema.",
-    "parte": "conclusao", "cartaz": "",
-}, follow_redirects=True)
-checar("POST editar atualiza ano e nota",
-       consultar("SELECT ano, imdb FROM filmes WHERE id='filme-de-teste-uc35'") == [(2025, 9.0)])
-checar("editar substitui os temas (agora 1)",
-       consultar("SELECT COUNT(*) FROM filme_temas WHERE filme_id='filme-de-teste-uc35'")[0][0] == 1)
-checar("tema que ficou sem filmes é removido",
-       consultar("SELECT COUNT(*) FROM temas WHERE nome='Tema Inédito'")[0][0] == 0)
+print("\n== CRUD DE ANOTAÇÕES ==")
+cliente.post("/anotacoes", data=dict(filme_id="parasita", parte="introducao",
+             texto="Usar Parasita para mostrar a desigualdade espacial."), follow_redirects=True)
+criada = consultar("SELECT id, usuario_id FROM anotacoes WHERE texto LIKE '%desigualdade espacial%'")
+checar("CREATE grava no banco com o usuario_id", len(criada) == 1 and criada[0][1])
+if criada:
+    anot_id = criada[0][0]
+    checar("anotação aparece na página do filme", "desigualdade espacial" in cliente.get("/filmes/parasita").get_data(as_text=True))
+    cliente.post(f"/anotacoes/{anot_id}/editar",
+                 data=dict(texto="Texto atualizado pelo teste automatizado.", parte="conclusao"),
+                 follow_redirects=True)
+    checar("UPDATE altera texto e parágrafo", consultar(
+        "SELECT texto, parte FROM anotacoes WHERE id=?", (anot_id,))[0] == ("Texto atualizado pelo teste automatizado.", "conclusao"))
 
-print("\n== ANOTAÇÕES (JOIN) ==")
-cliente.post("/anotacoes", data={"filme_id": "parasita", "parte": "introducao",
-                                 "texto": "Usar Parasita para falar de desigualdade espacial."},
-             follow_redirects=True)
-anots = consultar("SELECT id FROM anotacoes")
-checar("POST /anotacoes cria anotação", len(anots) == 1)
-checar("anotação aparece na página do filme", "desigualdade espacial" in cliente.get("/filmes/parasita").get_data(as_text=True))
-checar("anotação traz o título do filme via JOIN",
-       cliente.get("/api/filmes/parasita").get_json()["anotacoes"][0]["filme_titulo"] == "Parasita")
-if anots:
-    cliente.post(f"/anotacoes/{anots[0][0]}/excluir", follow_redirects=True)
-    checar("POST excluir anotação", consultar("SELECT COUNT(*) FROM anotacoes")[0][0] == 0)
+    print("\n== ISOLAMENTO ENTRE USUÁRIOS ==")
+    outro = aplicacao.app.test_client()
+    outro.post("/conta/criar", data=dict(nome="Segundo", sobrenome="Usuario", email="segundo.uc35@exemplo.com",
+               senha="senha1234", confirmar="senha1234", protecao="simples"))
+    checar("outro usuário não vê a anotação", "Texto atualizado" not in outro.get("/anotacoes").get_data(as_text=True))
+    outro.post(f"/anotacoes/{anot_id}/excluir", follow_redirects=True)
+    checar("outro usuário não consegue excluir", consultar("SELECT COUNT(*) FROM anotacoes WHERE id=?", (anot_id,))[0][0] == 1)
+    outro.post(f"/anotacoes/{anot_id}/editar", data=dict(texto="Tentativa de invasão da anotação alheia.", parte="introducao"))
+    checar("outro usuário não consegue editar", consultar("SELECT texto FROM anotacoes WHERE id=?", (anot_id,))[0][0].startswith("Texto atualizado"))
 
-print("\n== DELETE (CASCADE) ==")
-cliente.post("/anotacoes", data={"filme_id": "filme-de-teste-uc35", "parte": "conclusao",
-                                 "texto": "Anotação que deve sumir junto com o filme."})
-cliente.post("/filmes/filme-de-teste-uc35/excluir", follow_redirects=True)
-checar("POST excluir remove o filme", consultar("SELECT COUNT(*) FROM filmes WHERE id='filme-de-teste-uc35'")[0][0] == 0)
-checar("vínculos de tema removidos em cascata",
-       consultar("SELECT COUNT(*) FROM filme_temas WHERE filme_id='filme-de-teste-uc35'")[0][0] == 0)
-checar("anotações do filme removidas em cascata",
-       consultar("SELECT COUNT(*) FROM anotacoes WHERE filme_id='filme-de-teste-uc35'")[0][0] == 0)
-checar("catálogo original preservado (52 filmes)", consultar("SELECT COUNT(*) FROM filmes")[0][0] == 52)
-checar("nenhuma chave estrangeira quebrada", consultar("PRAGMA foreign_key_check") == [])
+    cliente.post(f"/anotacoes/{anot_id}/excluir", follow_redirects=True)
+    checar("DELETE remove do banco", consultar("SELECT COUNT(*) FROM anotacoes WHERE id=?", (anot_id,))[0][0] == 0)
+cliente.post("/anotacoes", data=dict(filme_id="x", parte="introducao", texto="curta"))
+checar("anotação inválida é rejeitada", consultar("SELECT COUNT(*) FROM anotacoes")[0][0] == 0)
 
-print("\n== HERANÇA DE TEMPLATES / ACESSIBILIDADE ==")
+print("\n== ASSISTENTE DE IA ==")
+dados = cliente.post("/api/assistente", json={"mensagem": "Escreva uma redação completa sobre saúde mental"}).get_json()
+checar("gera redação estruturada", any("Introdução" in b["titulo"] for b in dados["blocos"]) and len(dados["blocos"]) >= 5)
+checar("inclui projeto de texto antes dos parágrafos", dados["blocos"][0]["tipo"] == "plano")
+checar("resposta identifica o parceiro masculino de cinema", dados.get("persona", {}).get("nome") == "Briggs")
+checar("personalidade do Briggs está definida", "cavalheiro cinéfilo" in dados.get("persona", {}).get("descricao", ""))
+checar("sugere videoaulas", len(dados["videos"]) == 2)
+checar("sugere novas perguntas", len(dados["sugestoes"]) > 0)
+correcao = cliente.post("/api/assistente", json={"mensagem": "Corrija a minha redação. " + ("A desigualdade social persiste no Brasil e afeta a educação pública. " * 15)}).get_json()
+checar("corrige texto colado com ressalva de estimativa", "orientativa" in correcao["texto"])
+
+print("\n== CONTA COM A2F ==")
+a2f = aplicacao.app.test_client()
+a2f.post("/conta/criar", data=dict(nome="Dois", sobrenome="Fatores", email="a2f.uc35@exemplo.com",
+         senha="senha1234", confirmar="senha1234", protecao="a2f"))
+codigo = contas.CODIGOS_PENDENTES["a2f.uc35@exemplo.com"]["codigo"]
+checar("código de 6 dígitos gerado", len(codigo) == 6)
+checar("usuário A2F gravado com a2f=1", consultar("SELECT a2f FROM usuarios WHERE email='a2f.uc35@exemplo.com'")[0][0] == 1)
+checar("sem verificar, /anotacoes continua bloqueada", a2f.get("/anotacoes").status_code == 302)
+checar("código errado é rejeitado", "incorreto" in a2f.post("/conta/verificar", data={"codigo": "000000"}).get_data(as_text=True))
+checar("código correto libera acesso", a2f.post("/conta/verificar", data={"codigo": codigo}, follow_redirects=True).status_code == 200)
+checar("anotações liberadas após A2F", a2f.get("/anotacoes").status_code == 200)
+
+print("\n== LOGIN POR E-MAIL E SENHA (lendo do banco) ==")
+novo = aplicacao.app.test_client()
+checar("senha errada é recusada", "incorretos" in novo.post("/conta/entrar", data=dict(email="teste.uc35@exemplo.com", senha="errada123")).get_data(as_text=True))
+checar("senha certa entra", novo.post("/conta/entrar", data=dict(email="teste.uc35@exemplo.com", senha="senha1234")).status_code == 302)
+
+print("\n== JOIN E PÁGINAS ==")
+checar("sobre conta usuários pelo banco", "Hoje o catálogo tem" in cliente.get("/sobre").get_data(as_text=True))
+with aplicacao.app.app_context():
+    rel = aplicacao.filmes_relacionados("parasita")
+    checar("filmes relacionados vêm do banco (JOIN)", 0 < len(rel) <= 6 and all(f["id"] != "parasita" for f in rel))
+    checar("catálogo mantém a ordem original", aplicacao.listar_filmes()[0]["id"] == "que-horas-ela-volta")
+
+print("\n== HERANÇA, FAVICON E ACESSIBILIDADE ==")
 html = cliente.get("/filmes").get_data(as_text=True)
-checar("base.html aplicado (navbar em todas as páginas)", "Cine" in html and "navbar" in html)
+checar("base.html aplicado (navbar)", "navbar" in html)
+checar("favicon e logo da claquete no menu", "icon/favicon.svg" in html and "logo-marca" in html)
 checar("link de pular conteúdo presente", "pular-conteudo" in html)
+checar("painel de acessibilidade e assistente no layout", "acess-painel" in html and "ia-painel" in html)
 checar("Bootstrap carregado", "bootstrap@5" in html)
+for arq in ["favicon.svg", "favicon.ico", "favicon.png", "apple-touch-icon.png"]:
+    checar(f"static/icon/{arq} servido", cliente.get(f"/static/icon/{arq}").status_code == 200)
 
 shutil.rmtree(TMP, ignore_errors=True)
-print("\n" + ("TODOS OS TESTES PASSARAM" if not falhas else f"FALHAS: {falhas}"))
+print("\n" + ("Todos os testes passaram." if falhas == 0 else f"{falhas} teste(s) falharam."))
 sys.exit(1 if falhas else 0)

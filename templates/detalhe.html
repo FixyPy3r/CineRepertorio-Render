@@ -8,8 +8,12 @@
 
   <article class="row g-4">
     <div class="col-12 col-md-4">
+      {% if filme.cartaz %}
       <img class="cartaz-detalhe" src="{{ filme.cartaz|cartaz }}"
            alt="Cartaz do filme {{ filme.titulo }}" width="400" height="600">
+      {% else %}
+      <div class="cartaz-detalhe cartaz-vazio" role="img" aria-label="Cartaz de {{ filme.titulo }} ainda não cadastrado">&#127916;</div>
+      {% endif %}
     </div>
 
     <div class="col-12 col-md-8">
@@ -50,13 +54,9 @@
            aria-label="Ver {{ filme.titulo }} no IMDb (abre em nova aba)">Ver no IMDb</a>
       </div>
 
-      <div class="d-flex flex-wrap gap-2 mt-4">
-        <a class="btn btn-contorno btn-sm" href="{{ url_for('filme_editar', filme_id=filme.id) }}">Editar filme</a>
-        <form method="post" action="{{ url_for('filme_excluir', filme_id=filme.id) }}"
-              onsubmit="return confirm('Excluir {{ filme.titulo }} do catálogo?');">
-          <button class="btn btn-perigo btn-sm" type="submit">Excluir filme</button>
-        </form>
-      </div>
+      <p class="texto-suave small mt-4 mb-0">
+        Catálogo somente leitura, atualizado automaticamente pelo site — última renovação da vitrine em {{ atualizado_em }}.
+      </p>
     </div>
   </article>
 

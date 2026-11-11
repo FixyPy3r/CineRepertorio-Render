@@ -1,0 +1,42 @@
+CINEREPERTÓRIO — API OPCIONAL DO BRIGGS
+==================================================
+
+O que muda
+----------
+ATENÇÃO: a API não é necessária para usar o Briggs. O projeto agora vem com um
+motor offline expandido, sem chave, sem internet e sem cobrança. Este arquivo
+serve apenas para quem desejar habilitar uma integração remota no futuro.
+
+Antes de começar
+----------------
+A API pode gerar cobrança separada do ChatGPT. Como o usuário pode ser menor
+de 18 anos, a permissão, a conta e qualquer configuração de faturamento devem
+ser tratadas por um responsável adulto.
+
+Passos
+------
+1. Abra a pasta CineRepertorio, onde está o arquivo app.py.
+2. Abra o arquivo .env com o Bloco de Notas.
+   - Se ainda não existir, copie .env.example e renomeie a cópia para .env.
+   - Se já existir por causa do SMTP, NÃO o substitua. Preserve as linhas SMTP.
+3. No fim do .env, acrescente:
+
+   BRIGGS_USE_API=true
+   OPENAI_API_KEY=COLOQUE_A_CHAVE_NO_COMPUTADOR
+   BRIGGS_MODEL=gpt-6-luna
+
+4. Substitua o texto de exemplo pela chave criada e administrada pelo responsável.
+5. Salve o arquivo e reinicie o servidor Flask.
+6. Reinicie o aplicativo. A API só será usada quando BRIGGS_USE_API=true e
+   existir uma chave válida. Caso contrário, o Briggs permanece offline.
+
+Segurança
+---------
+- Nunca cole a chave no chat do Briggs, em mensagens, no HTML ou no JavaScript.
+- Não envie o arquivo .env a outras pessoas e não o publique no GitHub.
+- As mensagens são enviadas ao serviço de IA configurado; não compartilhe
+  senhas, códigos de verificação ou dados pessoais sensíveis.
+- O histórico recente é mantido no sessionStorage da aba atual, não em uma
+  tabela do banco de dados. Use o botão "Limpar" para apagá-lo.
+- Sem a ativação explícita, Briggs usa o motor offline expandido com respostas
+  locais combinatórias sobre diversos assuntos.

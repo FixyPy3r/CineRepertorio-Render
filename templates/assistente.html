@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container pb-5 pagina-assistente">
+  <section class="painel painel-assistente p-4 p-lg-5 mb-4" aria-labelledby="titulo-assistente">
+    <div class="row align-items-center g-4">
+      <div class="col-md-8">
+        <span class="assistente-selo">SEU PARCEIRO DE CINEMA E ESCRITA · BRIGGS</span>
+        <h1 class="display-6 fw-bold mb-2" id="titulo-assistente">Conheça o <span class="brilho">Briggs</span></h1>
+        <p class="lead mb-3">Um cavalheiro confiante, curioso e espirituoso, pronto para conversar sobre cinema, estudos, tecnologia, criatividade, ideias e muitos outros assuntos.</p>
+        <p class="texto-suave mb-4">Briggs é seu parceiro de conversa para muito além do cinema. Você pode pedir explicações, trocar ideias, planejar projetos, tirar dúvidas, estudar, criar textos e conversar livremente. Quando o assunto for redação, ele também organiza o projeto de texto, os argumentos e a proposta de intervenção. É espirituoso sem exagero, direto sem ser seco e curioso na medida certa.</p>
+        <button class="btn btn-dourado" type="button" data-abrir-ia>Conversar sobre qualquer assunto</button>
+      </div>
+      <div class="col-md-4 text-center">
+        <img src="{{ url_for('static', filename='img/assistente-cinema.jpg') }}" alt="Personagem masculino do CineRepertório: um cavalheiro com cabeça de câmera de cinema" class="assistente-mascote-pagina">
+        <p class="small texto-suave mt-2 mb-0">Toda boa redação merece um bom roteiro.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <section class="painel p-4 h-100" aria-labelledby="titulo-roteiro">
+        <h2 class="h4 brilho" id="titulo-roteiro">Um roteiro para sua redação</h2>
+        <p class="texto-suave">Antes de escrever, organize as ideias. Depois, cada parágrafo cumpre uma função.</p>
+        <div class="assistente-etapas">
+          <article class="assistente-etapa"><span>01</span><div><h3>Projeto de texto</h3><p>Delimite o tema, formule a tese e escolha dois argumentos que possam ser defendidos.</p></div></article>
+          <article class="assistente-etapa"><span>02</span><div><h3>Introdução</h3><p>Contextualize, apresente um repertório pertinente e anuncie a tese com os dois eixos.</p></div></article>
+          <article class="assistente-etapa"><span>03</span><div><h3>Dois desenvolvimentos</h3><p>Um argumento por parágrafo: explique, comprove, relacione o repertório e mostre as consequências.</p></div></article>
+          <article class="assistente-etapa"><span>04</span><div><h3>Conclusão</h3><p>Retome a discussão e proponha uma intervenção com agente, ação, meio, finalidade e detalhamento.</p></div></article>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-lg-5">
+      <section class="painel p-4 mb-4" aria-labelledby="titulo-recursos">
+        <h2 class="h5 brilho" id="titulo-recursos">O que podemos conversar</h2>
+        <ul class="texto-suave mb-0 assistente-recursos">
+          <li><strong>Planejamento:</strong> transforma o tema em tese e dois eixos argumentativos.</li>
+          <li><strong>Redação-modelo:</strong> organiza o texto em quatro parágrafos e destaca a intervenção.</li>
+          <li><strong>Repertório:</strong> procura filmes do catálogo com temas relacionados.</li>
+          <li><strong>Revisão:</strong> aponta aspectos que merecem atenção e sugere caminhos de melhoria.</li>
+          <li><strong>Ideias e projetos:</strong> ajuda a planejar, criar, comparar opções e resolver problemas cotidianos.</li>
+          <li><strong>Conhecimento geral:</strong> explica assuntos de diferentes áreas e adapta a profundidade ao que você precisa.</li>
+        </ul>
+      </section>
+
+      <section class="painel p-4" aria-labelledby="titulo-perguntas">
+        <h2 class="h5 brilho" id="titulo-perguntas">Comece por aqui</h2>
+        <div class="d-flex flex-wrap gap-2">
+          {% for pergunta in sugestoes %}
+            <button class="ia-chip" type="button" data-pergunta="{{ pergunta }}">{{ pergunta }}</button>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="painel painel-suave p-4 mt-4" aria-labelledby="titulo-transparencia">
+    <h2 class="h6 brilho" id="titulo-transparencia">Como funciona</h2>
+    <p class="small texto-suave mb-0">{% if briggs_api_ativa %}A conversa conectada está ativada no servidor. O histórico recente fica nesta aba do navegador. Para assuntos que mudam com o tempo, confirme informações atuais em fontes confiáveis.{% else %}Briggs funciona no modo offline expandido: combina uma base local de conhecimento com estruturas, exemplos e estilos de resposta. Não precisa de chave de API, cadastro ou configuração adicional. A biblioteca combina mais de 500 milhões de variações possíveis, embora isso não signifique que existam 500 milhões de textos completos armazenados; temas muito específicos ou recentes podem exigir consulta externa.{% endif %} Não compartilhe senhas, códigos ou dados pessoais sensíveis. O histórico da conversa fica nesta aba do navegador. As orientações de redação são apoio de estudo, não uma correção oficial do ENEM.</p>
+  </section>
+</div>
+{% endblock %}

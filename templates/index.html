@@ -1,41 +1,72 @@
 {% extends "base.html" %}
 {% block conteudo %}
+<div class="home-cinema-shell">
+  <!-- Mosaico de cartazes ao fundo: versões duplicadas formam faixas contínuas. -->
+  <div class="cinema-wall" aria-hidden="true">
+    {% set faixas_parede = [esteira_a[:12], destaques[:10], esteira_b[:12]] %}
+    {% for filmes_faixa in faixas_parede %}
+      <div class="cinema-wall-row cinema-wall-row-{{ loop.index }}">
+        <div class="cinema-wall-track">
+          {% for copia in range(2) %}
+            {% for filme in filmes_faixa %}
+              {% if filme.cartaz %}
+                <img src="{{ filme.cartaz|cartaz }}" alt="" loading="lazy" decoding="async">
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 
-<section class="container hero" aria-labelledby="titulo-hero">
-  <p class="selo">Repertório sociocultural · ENEM</p>
-  <h1 id="titulo-hero" class="display-5 fw-bold">
-    Filmes que <span class="brilho">viram argumento</span> na sua redação
-  </h1>
-  <p class="lead texto-suave">
-    {{ total }} filmes catalogados em {{ total_temas }} temas, com nota do IMDb, sinopse,
-    orientação de uso por parágrafo, citação pronta para copiar e links para assistir.
-  </p>
-  <div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-dourado" href="{{ url_for('filmes_lista') }}">Ver o catálogo</a>
-    <a class="btn btn-contorno" href="{{ url_for('estrutura') }}">Estrutura da redação</a>
+  <div class="home-cinema-content">
+<section class="container hero hero-cinema" aria-labelledby="titulo-hero">
+  <div class="hero-mascote" aria-hidden="true">
+    <img src="{{ url_for('static', filename='img/assistente-cinema.jpg') }}"
+         alt="" loading="eager" fetchpriority="high">
+    <span class="hero-mascote-frase">Cinema em <strong>um só lugar!</strong></span>
+  </div>
+  <div class="hero-copy">
+    <p class="selo">Repertório sociocultural · ENEM</p>
+    <h1 id="titulo-hero" class="display-5 fw-bold">
+      Filmes que <span class="brilho">viram argumento</span> na sua redação
+    </h1>
+    <p class="lead texto-suave">
+      {{ total }} filmes catalogados em {{ total_temas }} temas, com nota do IMDb, sinopse,
+      orientação de uso por parágrafo, citação pronta para copiar e links para assistir.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-dourado" href="{{ url_for('filmes_lista') }}">Ver o catálogo</a>
+      <a class="btn btn-contorno" href="{{ url_for('estrutura') }}">Estrutura da redação</a>
+    </div>
+    <div class="hero-indicadores" aria-label="Resumo do catálogo">
+      <span><strong>{{ total }}</strong> filmes</span>
+      <span><strong>{{ total_temas }}</strong> temas</span>
+      <span><strong>ENEM</strong> e redação</span>
+    </div>
   </div>
 </section>
 
 <section class="mt-5" aria-labelledby="titulo-esteira">
   <h2 id="titulo-esteira" class="container h4">Cartazes em destaque</h2>
   <p class="container texto-suave small">
-    As faixas abaixo passam sozinhas e param quando você posiciona o cursor ou o foco do teclado.
+    Explore sem fim: ao chegar ao último cartaz, a faixa continua do começo. Passe o mouse para ver os detalhes e use as setas ou deslize o dedo.
   </p>
 
-  <div class="esteira" data-esteira>
-    <div class="esteira-trilha">
-      {% for filme in esteira_a + esteira_a %}{% include "_cartaz.html" %}{% endfor %}
+  {% for nome, lista in [('Faixa 1', esteira_a), ('Faixa 2', esteira_b)] %}
+  <div class="carrossel" data-carrossel>
+    <button type="button" class="seta seta-esq" data-seta="-1" aria-label="Cartazes anteriores ({{ nome }})">&#10094;</button>
+    <div class="carrossel-trilha" role="region" aria-label="Cartazes em destaque — {{ nome }}" tabindex="-1">
+      {% for filme in lista %}{% include "_cartaz.html" %}{% endfor %}
     </div>
+    <button type="button" class="seta seta-dir" data-seta="1" aria-label="Próximos cartazes ({{ nome }})">&#10095;</button>
   </div>
-  <div class="esteira" data-esteira>
-    <div class="esteira-trilha inversa">
-      {% for filme in esteira_b + esteira_b %}{% include "_cartaz.html" %}{% endfor %}
-    </div>
-  </div>
+  {% endfor %}
 </section>
 
 <section class="container mt-5" aria-labelledby="titulo-destaques">
-  <h2 id="titulo-destaques" class="h4">Mais bem avaliados no IMDb</h2>
+  <h2 id="titulo-destaques" class="h4">Vitrine do dia</h2>
+  <p class="texto-suave small mb-0">O catálogo se renova sozinho: esta seleção muda automaticamente todo dia. Atualizada em {{ atualizado_em }}.</p>
   <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-6 g-3 mt-1">
     {% for filme in destaques %}
       <div class="col">{% include "_cartaz.html" %}</div>
@@ -63,4 +94,6 @@
   </div>
 </section>
 
+  </div>
+</div>
 {% endblock %}

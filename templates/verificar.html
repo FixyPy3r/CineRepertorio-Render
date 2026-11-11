@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-5">
+      <h1 class="h3">Verificação em <span class="brilho">duas etapas</span></h1>
+      <p class="texto-suave">Enviamos um código de 6 dígitos para <strong>{{ email }}</strong>. Ele vale por 10 minutos.</p>
+
+      {% if codigo_demo %}
+        <div class="painel-suave p-3 small" role="note">
+          <strong>Ambiente acadêmico:</strong> não há servidor de e-mail configurado, então o código gerado aparece aqui e
+          também no terminal do Flask — <span class="brilho">{{ codigo_demo }}</span>.
+        </div>
+      {% endif %}
+
+      <form class="painel p-4 mt-3" method="post" action="{{ url_for('verificar_codigo') }}" novalidate>
+        <label class="form-label" for="codigo">Código de verificação</label>
+        <input class="form-control form-control-lg text-center" id="codigo" name="codigo" inputmode="numeric"
+               pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" aria-describedby="ajuda-codigo">
+        <div class="form-text" id="ajuda-codigo">Digite os 6 números recebidos por e-mail.</div>
+        <button class="btn btn-dourado mt-4 w-100" type="submit">Confirmar e entrar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
