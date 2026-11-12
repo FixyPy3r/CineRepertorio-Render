@@ -1,31 +1,10 @@
 {% extends "base.html" %}
 {% block conteudo %}
 <div class="home-cinema-shell">
-  <!-- Mosaico de cartazes ao fundo: versões duplicadas formam faixas contínuas. -->
-  <div class="cinema-wall" aria-hidden="true">
-    {% set faixas_parede = [esteira_a[:12], destaques[:10], esteira_b[:12]] %}
-    {% for filmes_faixa in faixas_parede %}
-      <div class="cinema-wall-row cinema-wall-row-{{ loop.index }}">
-        <div class="cinema-wall-track">
-          {% for copia in range(2) %}
-            {% for filme in filmes_faixa %}
-              {% if filme.cartaz %}
-                <img src="{{ filme.cartaz|cartaz }}" alt="" loading="lazy" decoding="async">
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-
   <div class="home-cinema-content">
-<section class="container hero hero-cinema" aria-labelledby="titulo-hero">
-  <div class="hero-mascote" aria-hidden="true">
-    <img src="{{ url_for('static', filename='img/assistente-cinema.jpg') }}"
-         alt="" loading="eager" fetchpriority="high">
-    <span class="hero-mascote-frase">Cinema em <strong>um só lugar!</strong></span>
-  </div>
+<div class="home-topo">
+{% with classe_parede="cinema-wall-inicio" %}{% include "_parede_cartazes.html" %}{% endwith %}
+<section class="container hero hero-cinema hero-centro" aria-labelledby="titulo-hero">
   <div class="hero-copy">
     <p class="selo">Repertório sociocultural · ENEM</p>
     <h1 id="titulo-hero" class="display-5 fw-bold">
@@ -46,8 +25,10 @@
     </div>
   </div>
 </section>
+</div>
 
-<section class="mt-5" aria-labelledby="titulo-esteira">
+<div class="home-fundo-preto">
+<section class="pt-5" aria-labelledby="titulo-esteira">
   <h2 id="titulo-esteira" class="container h4">Cartazes em destaque</h2>
   <p class="container texto-suave small">
     Explore sem fim: ao chegar ao último cartaz, a faixa continua do começo. Passe o mouse para ver os detalhes e use as setas ou deslize o dedo.
@@ -93,6 +74,7 @@
     {% endfor %}
   </div>
 </section>
+</div>
 
   </div>
 </div>

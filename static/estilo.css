@@ -1175,6 +1175,7 @@ code { color: #ffd782; }
 .ia-bolha-texto { display: flex; flex-direction: column; line-height: 1.15; }
 .ia-bolha-texto small { color: #b3aacb; font-size: .68rem; }
 .ia-assinatura {
+  margin-right: .4rem;
   display: inline-block;
   margin-bottom: .45rem;
   color: #ffd782;
@@ -1682,3 +1683,131 @@ html.alto-contraste .inst-valores li {
   background: #000 !important;
   border-color: #fff !important;
 }
+
+/* ==========================================================================
+   Ajustes responsivos (2026-11): Briggs recortado, sem caixa preta no celular
+   ========================================================================== */
+.hero-mascote img {
+  mix-blend-mode: normal;
+  height: auto;
+  aspect-ratio: 760 / 778;
+  max-height: 455px;
+  width: auto;
+  max-width: 100%;
+}
+.hero-mascote-frase { white-space: nowrap; }
+.hero-copy, .painel { min-width: 0; }
+.hero-copy h1 { overflow-wrap: break-word; }
+img { max-width: 100%; }
+
+@media (max-width: 991.98px) and (min-width: 768px) {
+  .hero-cinema { grid-template-columns: minmax(200px, .7fr) minmax(0, 1.3fr); }
+  .hero-mascote img { max-height: 340px; }
+}
+
+@media (max-width: 767.98px) {
+  .hero-cinema { gap: 0; padding-top: .5rem; }
+  .hero-mascote {
+    flex-direction: column;
+    margin-bottom: -.6rem;
+    z-index: 1;
+  }
+  .hero-mascote::before { inset: 8% 14%; filter: blur(24px); }
+  .hero-mascote img {
+    width: min(62vw, 250px);
+    max-height: none;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .45)) drop-shadow(0 0 16px rgba(245, 196, 94, .16));
+  }
+  .hero-mascote-frase {
+    position: static;
+    margin-top: -.4rem;
+    font-size: .92rem;
+    transform: rotate(-3deg);
+  }
+  .hero-copy h1 { font-size: clamp(1.7rem, 7.4vw, 2.3rem); }
+  .hero-copy .lead { font-size: 1.02rem; }
+  .hero-copy .d-flex > .btn { flex: 1 1 100%; }
+  /* Botão do Briggs vira só o rosto, sem cobrir botões do conteúdo. */
+  .ia-bolha { padding: .25rem; }
+  .ia-bolha-texto { display: none !important; }
+  .ia-painel { width: calc(100vw - 1.5rem); height: min(620px, 80dvh); max-height: 80dvh; }
+  main, .home-cinema-content { padding-bottom: 4.5rem; }
+}
+
+@media (max-width: 380px) {
+  .hero-mascote img { width: 56vw; }
+  .hero-indicadores span { font-size: .72rem; padding: .36rem .6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-wall-track { animation: none !important; }
+}
+.ia-avatar { border-radius: 50%; object-fit: cover; }
+
+/* Início sem mascote: painel centralizado e parede de cartazes mais visível. */
+.hero-cinema.hero-centro { grid-template-columns: minmax(0, 860px); justify-content: center; text-align: center; }
+.hero-centro .hero-copy .lead { margin-inline: auto; }
+.hero-centro .d-flex, .hero-centro .hero-indicadores { justify-content: center; }
+.cinema-wall { opacity: 1; }
+.cinema-wall-track img { opacity: .62; filter: saturate(.95) brightness(.78); }
+.cinema-wall::before {
+  background:
+    linear-gradient(180deg, rgba(12, 11, 18, .10) 0%, rgba(12, 11, 18, .38) 50%, rgba(12, 11, 18, .82) 100%),
+    linear-gradient(90deg, rgba(12, 11, 18, .45), transparent 20%, transparent 80%, rgba(12, 11, 18, .45));
+}
+.cinema-wall::after { backdrop-filter: none; }
+/* Criar conta: mesma parede, um pouco mais intensa. */
+.conta-cinema-shell { min-height: calc(100vh - 68px); }
+.cinema-wall-forte .cinema-wall-track img { opacity: .78; filter: saturate(1.05) brightness(.88); }
+.cinema-wall-forte::before {
+  background: radial-gradient(ellipse at 50% 45%, rgba(12, 11, 18, .55), rgba(12, 11, 18, .2) 70%),
+    linear-gradient(180deg, transparent 60%, rgba(12, 11, 18, .7) 100%);
+}
+.conta-cinema-shell .painel { backdrop-filter: blur(10px); background-color: rgba(18, 16, 28, .9); }
+.conta-cinema-shell h1, .conta-cinema-shell .texto-suave { text-shadow: 0 2px 12px rgba(0,0,0,.85); }
+@media (max-width: 767.98px) {
+  .cinema-wall { opacity: .9; }
+  .cinema-wall-track img { opacity: .5; }
+  .cinema-wall-forte .cinema-wall-track img { opacity: .65; }
+}
+
+/* Home: parede de cartazes só no topo (hero); do carrossel em diante, fundo preto. */
+.home-topo {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.home-topo > .hero { position: relative; z-index: 1; }
+.cinema-wall.cinema-wall-inicio {
+  position: absolute;
+  inset: 0;
+  contain: paint;
+}
+.cinema-wall.cinema-wall-inicio::before {
+  background:
+    linear-gradient(180deg, rgba(12, 11, 18, .30) 0%, rgba(0, 0, 0, .55) 55%, #000 100%),
+    linear-gradient(90deg, rgba(12, 11, 18, .55), transparent 22%, transparent 78%, rgba(12, 11, 18, .55));
+}
+.home-fundo-preto {
+  background: #000;
+  padding-bottom: 1px;
+}
+.home-fundo-preto .seta-esq { background-image: linear-gradient(to right, rgba(0, 0, 0, .96), transparent); }
+.home-fundo-preto .seta-dir { background-image: linear-gradient(to left, rgba(0, 0, 0, .96), transparent); }
+
+/* Home: o brilho de fundo existe só no começo da página; o resto é preto. */
+body:has(.home-topo) {
+  background-color: #000;
+  background-image:
+    radial-gradient(900px 520px at 8% 0%, rgba(245, 196, 94, .22), transparent 64%),
+    radial-gradient(760px 500px at 92% 8%, rgba(245, 196, 94, .19), transparent 62%);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: 100% 900px;
+  background-position: top;
+}
+body:has(.home-topo) .rodape { background: #000; }
+
+/* Menu da conta (Entrar / Criar conta) sempre acima do conteúdo da página. */
+body > header { position: relative; z-index: 1060; }
+.menu-conta { z-index: 1070; }

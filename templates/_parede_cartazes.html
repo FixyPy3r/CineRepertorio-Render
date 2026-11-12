@@ -1,0 +1,18 @@
+  <!-- Mosaico de cartazes ao fundo: versões duplicadas formam faixas contínuas. -->
+  <div class="cinema-wall {{ classe_parede|default('') }}" aria-hidden="true">
+    {% set faixas_parede = [esteira_a[:12], destaques[:10], esteira_b[:12]] %}
+    {% for filmes_faixa in faixas_parede %}
+      <div class="cinema-wall-row cinema-wall-row-{{ loop.index }}">
+        <div class="cinema-wall-track">
+          {% for copia in range(2) %}
+            {% for filme in filmes_faixa %}
+              {% if filme.cartaz %}
+                <img src="{{ filme.cartaz|cartaz }}" alt="" loading="lazy" decoding="async">
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+

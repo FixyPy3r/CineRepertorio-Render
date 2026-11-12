@@ -426,7 +426,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const div = bolha(dados.texto, "bot");
     const assinatura = document.createElement("span");
     assinatura.className = "ia-assinatura";
-    assinatura.textContent = "Briggs";
+    assinatura.textContent = "Briggs:";
     div.insertBefore(assinatura, div.firstChild);
     (dados.blocos || []).forEach((b) => {
       const bloco = document.createElement("div");
@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (item.role === "assistant") {
         const assinatura = document.createElement("span");
         assinatura.className = "ia-assinatura";
-        assinatura.textContent = "Briggs";
+        assinatura.textContent = "Briggs:";
         div.insertBefore(assinatura, div.firstChild);
       }
     });
@@ -609,9 +609,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const boasVindas = bolha("Muito prazer, eu sou Briggs. Podemos conversar sobre praticamente qualquer assunto: estudos, tecnologia, ideias, filmes, criatividade ou o que estiver passando pela sua cabeça. Sou direto, curioso e tenho uma queda por boas histórias — mas a conversa é sua. Por onde começamos?", "bot");
     const assinaturaInicial = document.createElement("span");
     assinaturaInicial.className = "ia-assinatura";
-    assinaturaInicial.textContent = "Briggs";
+    assinaturaInicial.textContent = "Briggs:";
     boasVindas.insertBefore(assinaturaInicial, boasVindas.firstChild);
-    historico.push({ role: "assistant", content: boasVindas.textContent.replace("Briggs", "").trim() });
+    historico.push({ role: "assistant", content: boasVindas.textContent.replace("Briggs:", "").trim() });
     salvarHistorico();
   }
 
@@ -623,7 +623,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const boasVindas = bolha("Conversa limpa. A lousa está em branco — qual assunto vamos explorar agora?", "bot");
     const assinatura = document.createElement("span");
     assinatura.className = "ia-assinatura";
-    assinatura.textContent = "Briggs";
+    assinatura.textContent = "Briggs:";
     boasVindas.insertBefore(assinatura, boasVindas.firstChild);
     historico.push({ role: "assistant", content: "Conversa limpa. A lousa está em branco — qual assunto vamos explorar agora?" });
     salvarHistorico();

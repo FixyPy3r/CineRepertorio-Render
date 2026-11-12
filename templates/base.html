@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ titulo_pagina }}{% endblock %} · CineRepertório</title>
   <meta name="description" content="CineRepertório: catálogo de filmes para usar como repertório sociocultural na redação do ENEM, com nota do IMDb, citação pronta, assistente de redação com IA e repertório para a redação do ENEM.">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css', v='20261111-institucional') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css', v='20261112-responsivo') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon/favicon.svg') }}" type="image/svg+xml">
   <link rel="icon" href="{{ url_for('static', filename='icon/favicon.ico') }}" sizes="any">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon/apple-touch-icon.png') }}">
@@ -148,14 +149,14 @@
   <div class="ia-caixa" id="ia-caixa">
     <button class="ia-bolha" type="button" id="ia-abrir" aria-expanded="false" aria-controls="ia-painel"
             aria-label="Abrir conversa com Briggs">
-      <img src="{{ url_for('static', filename='img/assistente-cinema.jpg') }}" alt="" class="ia-avatar">
+      <img src="{{ url_for('static', filename='img/briggs-avatar.webp') }}" width="80" height="80" alt="" class="ia-avatar">
       <span class="ia-bolha-texto"><strong>Briggs</strong><small> seu parceiro de conversa e cinema</small></span>
     </button>
 
     <section class="ia-painel" id="ia-painel" hidden aria-label="Conversa com Briggs">
       <header class="ia-topo">
         <div class="ia-topo-identidade">
-          <img src="{{ url_for('static', filename='img/assistente-cinema.jpg') }}" alt="" class="ia-avatar-topo">
+          <img src="{{ url_for('static', filename='img/briggs-avatar.webp') }}" width="80" height="80" alt="" class="ia-avatar-topo">
           <div class="ia-topo-textos">
             <strong class="brilho" id="ia-identificacao">Briggs</strong>
             <p class="mb-0 small texto-suave" id="ia-presenca"><span class="ia-status-ponto" aria-hidden="true"></span>Pronto para conversar</p>
@@ -202,8 +203,8 @@
     </section>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ url_for('static', filename='script.js', v='20261111-institucional') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="{{ url_for('static', filename='script.js', v='20261112-responsivo') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

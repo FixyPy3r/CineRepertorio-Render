@@ -369,14 +369,24 @@ def login_obrigatorio(view):
 # --------------------------------------------------------------------------
 # Rota 1 — Página inicial (GET)
 # --------------------------------------------------------------------------
+def _faixas_cartazes():
+    """Divide os filmes com cartaz em faixas para a parede animada de fundo."""
+    filmes = listar_filmes()
+    vitrine = [f for f in filmes if f["cartaz"]] or filmes
+    metade = len(vitrine) // 2
+    return filmes, vitrine, vitrine[:metade], vitrine[metade:]
+
+
+def _parede_conta():
+    _, vitrine, esteira_a, esteira_b = _faixas_cartazes()
+    return {"esteira_a": esteira_a, "esteira_b": esteira_b, "destaques": vitrine[:10]}
+
+
 @app.route("/")
 def index():
-    filmes = listar_filmes()
     # Vitrine da home: só filmes que já têm cartaz (os demais aparecem no catálogo).
-    vitrine = [f for f in filmes if f["cartaz"]] or filmes
+    filmes, vitrine, esteira_a, esteira_b = _faixas_cartazes()
     destaques = selecao_do_dia(vitrine, 10)
-    esteira_a = vitrine[: len(vitrine) // 2]
-    esteira_b = vitrine[len(vitrine) // 2 :]
     return render_template(
         "index.html",
         titulo_pagina="Início",
@@ -440,7 +450,7 @@ def criar_conta():
             for erro in erros:
                 flash(erro, "danger")
             return render_template(
-                "criar_conta.html", titulo_pagina="Criar conta", form=request.form
+                "criar_conta.html", titulo_pagina="Criar conta", form=request.form, **_parede_conta()
             )
         usuario = contas.criar_usuario(request.form)
         if usuario["a2f"]:
@@ -458,7 +468,7 @@ def criar_conta():
         flash(f"Bem-vindo(a), {usuario['nome']}! Conta criada com sucesso.", "success")
         return redirect(url_for("index"))
 
-    return render_template("criar_conta.html", titulo_pagina="Criar conta", form={})
+    return render_template("criar_conta.html", titulo_pagina="Criar conta", form={}, **_parede_conta())
 
 
 # --------------------------------------------------------------------------
